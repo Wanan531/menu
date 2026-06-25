@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>私房小厨 · 今天吃什么</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap');
+
+    :root {
+      --cream: #faf6f0;
+      --warm-white: #fdf9f3;
+      --ink: #2c1a0e;
+      --ink-soft: #5c3d1e;
+      --ink-muted: #9a7a5a;
+      --accent: #c85a2a;
+      --accent-soft: #e8845a;
+      --gold: #b8860b;
+      --border: #e8d5b0;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      background-color: var(--cream);
+      font-family: 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+      color: var(--ink);
+      min-height: 100vh;
+    }
+    .serif { font-family: 'Noto Serif SC', 'STSong', 'SimSun', serif; }
+    .paper {
+      background-color: var(--warm-white);
+      background-image:
+        radial-gradient(circle at 20% 80%, rgba(184,134,11,0.04) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(200,90,42,0.04) 0%, transparent 50%);
+    }
+    .card {
+      background: var(--warm-white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(44,26,14,0.06), 0 1px 3px rgba(44,26,14,0.04);
+    }
+    .mode-pill {
+      display: inline-flex;
+      background: rgba(44,26,14,0.08);
+      border-radius: 999px;
+      padding: 3px;
+      gap: 2px;
+    }
+    .mode-pill button {
+      border-radius: 999px;
+      padding: 6px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      color: var(--ink-muted);
+      letter-spacing: 0.02em;
+    }
+    .mode-pill button.active {
+      background: var(--warm-white);
+      color: var(--ink);
+      box-shadow: 0 1px 4px rgba(44,26,14,0.15);
+    }
+    .ornament-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--gold);
+      font-size: 12px;
+      opacity: 0.6;
+    }
+    .ornament-divider::before, .ornament-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--gold), transparent);
+      opacity: 0.5;
+    }
+    .photo-upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      background: var(--cream);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      overflow: hidden;
+      position: relative;
+    }
+    .photo-upload-zone:hover { border-color: var(--accent-soft); background: #fff8f4; }
+    .photo-upload-zone input[type=file] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+      width: 100%; height: 100%; padding: 0; border: none; background: none;
+    }
+    .dish-thumb {
+      width: 52px; height: 52px;
+      border-radius: 8px;
+      object-fit: cover;
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+    }
+    .dish-thumb-placeholder {
+      width: 52px; height: 52px;
+      border-radius: 8px;
+      background: var(--cream);
+      border: 1px dashed var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .menu-card {
+      background: var(--warm-white);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(44,26,14,0.05);
+      transition: box-shadow 0.2s;
+    }
+    .menu-card:active { box-shadow: 0 1px 4px rgba(44,26,14,0.08); }
+    .menu-photo { width: 100%; height: 150px; object-fit: cover; display: block; }
+    .menu-photo-placeholder {
+      width: 100%; height: 90px;
+      background: linear-gradient(135deg, #fef3e8, #fde8d0);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px; opacity: 0.5;
+    }
+    .btn-add {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: white; border: none;
+      font-size: 18px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s ease;
+      box-shadow: 0 2px 8px rgba(200,90,42,0.35);
+    }
+    .btn-add:active { transform: scale(0.9); }
+    .btn-add.added { background: #22a36b; box-shadow: 0 2px 8px rgba(34,163,107,0.35); }
+    .btn-remove {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: rgba(200,90,42,0.1); color: var(--accent);
+      border: none; font-size: 14px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s ease; flex-shrink: 0;
+    }
+    .btn-remove:active { background: rgba(200,90,42,0.2); }
+    .float-bar {
+      position: fixed; bottom: 20px; left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 40px); max-width: 460px;
+      background: var(--ink); color: white;
+      border-radius: 16px; padding: 14px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 8px 32px rgba(44,26,14,0.35);
+      cursor: pointer; z-index: 50;
+      transition: transform 0.2s ease;
+    }
+    .float-bar:active { transform: translateX(-50%) scale(0.98); }
+    .float-badge {
+      background: var(--accent); color: white;
+      border-radius: 999px; padding: 2px 9px;
+      font-size: 13px; font-weight: 600;
+    }
+    .bottom-sheet-overlay {
+      position: fixed; inset: 0;
+      background: rgba(44,26,14,0.5);
+      z-index: 60; display: flex; align-items: flex-end;
+      backdrop-filter: blur(2px);
+    }
+    .bottom-sheet {
+      background: var(--warm-white);
+      border-radius: 20px 20px 0 0;
+      width: 100%; max-height: 82vh;
+      overflow-y: auto; padding: 20px 20px 44px;
+      animation: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .lightbox-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.88);
+      z-index: 80; display: flex;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .lightbox-overlay img { max-width: 100%; max-height: 90vh; border-radius: 10px; object-fit: contain; }
+    .lightbox-close {
+      position: fixed; top: 16px; right: 16px;
+      width: 36px; height: 36px;
+      background: rgba(255,255,255,0.15); border: none;
+      border-radius: 50%; color: white; font-size: 18px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    .btn-send {
+      background: linear-gradient(135deg, var(--accent) 0%, #e06030 100%);
+      color: white; border: none; border-radius: 14px;
+      padding: 14px 0; width: 100%;
+      font-size: 16px; font-weight: 600; cursor: pointer;
+      letter-spacing: 0.05em;
+      box-shadow: 0 4px 16px rgba(200,90,42,0.35);
+      transition: all 0.2s ease;
+      font-family: 'Noto Sans SC', sans-serif;
+    }
+    .btn-send:active { transform: scale(0.98); }
+    .btn-send.sent { background: linear-gradient(135deg, #22a36b 0%, #1a8a58 100%); box-shadow: 0 4px 16px rgba(34,163,107,0.35); }
+    .btn-primary {
+      background: var(--ink); color: white; border: none;
+      border-radius: 10px; padding: 10px 20px;
+      font-size: 14px; font-weight: 500; cursor: pointer;
+      font-family: 'Noto Sans SC', sans-serif; transition: opacity 0.15s;
+    }
+    .btn-primary:active { opacity: 0.85; }
+    .btn-ghost {
+      background: transparent; border: 1px solid var(--border);
+      border-radius: 8px; padding: 5px 11px;
+      font-size: 12px; cursor: pointer;
+      font-family: 'Noto Sans SC', sans-serif;
+      transition: all 0.15s; color: var(--ink-muted);
+    }
+    .btn-ghost:active { background: rgba(44,26,14,0.06); }
+    .btn-ghost.danger { color: var(--accent); border-color: rgba(200,90,42,0.25); }
+    input, textarea, select {
+      font-family: 'Noto Sans SC', sans-serif;
+      background: var(--cream); border: 1px solid var(--border);
+      border-radius: 8px; padding: 9px 12px;
+      font-size: 14px; color: var(--ink); width: 100%;
+      outline: none; transition: border-color 0.15s;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--accent-soft);
+      box-shadow: 0 0 0 3px rgba(200,90,42,0.08);
+    }
+    input::placeholder, textarea::placeholder { color: var(--ink-muted); }
+    .cat-header { display: flex; align-items: center; gap: 8px; margin: 20px 0 10px; }
+    .cat-line { flex: 1; height: 1px; background: var(--border); }
+    .toast {
+      position: fixed; top: 20px; left: 50%;
+      transform: translateX(-50%);
+      background: var(--ink); color: white;
+      border-radius: 999px; padding: 10px 22px;
+      font-size: 14px; z-index: 100;
+      white-space: nowrap;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      animation: toastIn 0.25s ease;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+    .empty-art { font-size: 48px; opacity: 0.4; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    .dish-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 420px) { .dish-grid { grid-template-columns: 1fr 1fr 1fr; } }
+    .photo-ordered-ring { outline: 3px solid #22a36b; outline-offset: 2px; }
+
+    /* Setup screen */
+    .setup-screen {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .setup-card {
+      background: var(--warm-white);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px 24px;
+      width: 100%; max-width: 420px;
+      box-shadow: 0 8px 32px rgba(44,26,14,0.1);
+    }
+    .input-group { display: flex; flex-direction: column; gap: 6px; }
+    .input-group label { font-size: 13px; font-weight: 500; color: var(--ink-soft); }
+
+    /* Order notification dot */
+    .notif-dot {
+      width: 8px; height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: inline-block;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.8); }
+    }
+
+    /* Order history card */
+    .order-card {
+      background: var(--warm-white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+    .order-card.new-order { border-color: var(--accent-soft); background: #fff8f4; }
+
+    .sync-indicator {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; color: var(--ink-muted);
+    }
+    .sync-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #22a36b;
+    }
+    .sync-dot.syncing { background: var(--gold); animation: pulse 1s infinite; }
+    .sync-dot.error { background: var(--accent); }
+  </style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- Toast -->
+  <transition name="fade">
+    <div v-if="toast.show" class="toast">{{ toast.msg }}</div>
+  </transition>
+
+  <!-- Lightbox -->
+  <transition name="fade">
+    <div v-if="lightbox" class="lightbox-overlay" @click="lightbox = null">
+      <button class="lightbox-close" @click="lightbox = null">✕</button>
+      <img :src="lightbox" alt="菜品大图" @click.stop />
+    </div>
+  </transition>
+
+  <!-- ══════════════════════════════════════
+       MAIN APP
+  ══════════════════════════════════════ -->
+  <div>
+
+    <!-- HEADER -->
+    <header class="paper sticky top-0 z-40 border-b" style="border-color:var(--border); box-shadow:0 1px 8px rgba(44,26,14,0.06);">
+      <div class="max-w-lg mx-auto px-4 py-3 flex flex-col items-center gap-2">
+        <div class="flex items-center gap-2">
+          <span style="font-size:20px">🍜</span>
+          <h1 class="serif text-lg font-semibold tracking-widest" style="color:var(--ink); letter-spacing:0.12em;">私房小厨</h1>
+          <span style="font-size:20px">🍜</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="mode-pill">
+            <button :class="{ active: mode === 'chef' }" @click="mode = 'chef'">👨‍🍳 大厨管理</button>
+            <button :class="{ active: mode === 'guest' }" @click="switchToGuest">💕 宝贝点单</button>
+          </div>
+          <!-- Sync status -->
+          <div class="sync-indicator">
+            <span class="sync-dot" :class="{ syncing: syncing, error: syncError }"></span>
+            <span>{{ syncing ? '同步中' : syncError ? '断线' : '已同步' }}</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ══ CHEF MODE ══ -->
+    <div v-if="mode === 'chef'" class="max-w-lg mx-auto px-4 py-5" style="padding-bottom:40px;">
+
+      <!-- New order notification -->
+      <div v-if="newOrderAlert" class="card p-4 mb-4 flex items-start gap-3"
+        style="background:#fff8f4; border-color:var(--accent-soft); cursor:pointer;"
+        @click="viewNewOrder">
+        <span class="notif-dot mt-1 flex-shrink-0"></span>
+        <div class="flex-1">
+          <p class="text-sm font-semibold" style="color:var(--accent);">宝贝刚刚下单了！</p>
+          <p class="text-xs mt-0.5" style="color:var(--ink-muted);">点击查看今日点单 →</p>
+        </div>
+      </div>
+
+      <div class="card p-4 mb-5 text-center">
+        <div class="text-2xl mb-1">👨‍🍳</div>
+        <p class="serif font-semibold" style="color:var(--ink); font-size:15px;">大厨，今天打算做什么好吃的？</p>
+        <p class="text-xs mt-1" style="color:var(--ink-muted);">录入菜品后，宝贝那边会实时看到 ❤️</p>
+      </div>
+
+      <!-- Latest order panel -->
+      <div v-if="latestOrder" class="mb-5">
+        <div class="ornament-divider mb-3"><span class="serif text-xs tracking-widest" style="color:var(--gold);">宝贝的点单</span></div>
+        <div class="order-card" :class="{ 'new-order': newOrderAlert }">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold" style="color:var(--ink-soft);">{{ formatTime(latestOrder.created_at) }}</span>
+            <span v-if="newOrderAlert" class="text-xs" style="color:var(--accent);">● 新</span>
+          </div>
+          <div class="flex flex-wrap gap-2 mb-3">
+            <div v-for="item in latestOrder.items" :key="item.id"
+              class="flex items-center gap-1.5 px-2 py-1 rounded-lg"
+              style="background:var(--cream); border:1px solid var(--border);">
+              <img v-if="item.photo" :src="item.photo"
+                style="width:22px;height:22px;border-radius:4px;object-fit:cover;" />
+              <span class="text-xs font-medium" style="color:var(--ink);">{{ item.name }}</span>
+              <span v-if="item.note" class="text-xs" style="color:var(--ink-muted);">· {{ item.note }}</span>
+            </div>
+          </div>
+          <p class="text-xs p-2 rounded-lg" style="background:#fff0e8; color:var(--ink-soft); line-height:1.6;">{{ latestOrder.message }}</p>
+        </div>
+      </div>
+
+      <!-- Add dish form -->
+      <div class="card p-4 mb-5">
+        <div class="ornament-divider mb-4"><span class="serif text-xs tracking-widest" style="color:var(--gold);">添加新菜品</span></div>
+        <div class="flex flex-col gap-3">
+          <div>
+            <label class="text-xs font-medium mb-1 block" style="color:var(--ink-soft);">菜名 *</label>
+            <input v-model="newDish.name" placeholder="例如：番茄炒蛋" maxlength="20" />
+          </div>
+          <div>
+            <label class="text-xs font-medium mb-1 block" style="color:var(--ink-soft);">分类 *</label>
+            <select v-model="newDish.category">
+              <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.icon }} {{ cat.name }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-medium mb-1 block" style="color:var(--ink-soft);">备注（可不填）</label>
+            <input v-model="newDish.note" placeholder="例如：微辣、少油、大份" maxlength="30" />
+          </div>
+          <div>
+            <label class="text-xs font-medium mb-1 block" style="color:var(--ink-soft);">菜品照片（可选）</label>
+            <div v-if="!newDish.photo" class="photo-upload-zone flex flex-col items-center justify-center gap-1 py-5">
+              <input type="file" accept="image/*" @change="handleNewPhoto" />
+              <span style="font-size:28px;">📷</span>
+              <span class="text-xs" style="color:var(--ink-muted);">点击上传照片</span>
+            </div>
+            <div v-else style="position:relative;">
+              <img :src="newDish.photo" style="width:100%;height:140px;object-fit:cover;border-radius:10px;border:1px solid var(--border);" />
+              <button @click="newDish.photo = ''"
+                style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.5);color:white;border:none;border-radius:50%;width:26px;height:26px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;">✕</button>
+            </div>
+          </div>
+          <button class="btn-primary w-full" @click="addDish" :disabled="saving"
+            style="margin-top:2px; opacity: saving ? 0.7 : 1;">
+            {{ saving ? '上传中…' : '＋ 加入菜单' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Dish list -->
+      <div v-if="dishes.length > 0">
+        <div class="ornament-divider mb-4"><span class="serif text-xs tracking-widest" style="color:var(--gold);">我的菜单 · {{ dishes.length }} 道</span></div>
+        <div v-for="cat in categoriesWithDishes" :key="cat.id" class="mb-4">
+          <div class="cat-header">
+            <span class="text-sm font-medium" style="color:var(--ink-soft);">{{ cat.icon }} {{ cat.name }}</span>
+            <div class="cat-line"></div>
+          </div>
+          <div class="flex flex-col gap-2">
+            <div v-for="dish in cat.dishes" :key="dish.id" class="card flex items-center gap-3 p-3">
+              <div @click="dish.photo && (lightbox = dish.photo)" :style="dish.photo ? 'cursor:zoom-in' : ''">
+                <img v-if="dish.photo" :src="dish.photo" class="dish-thumb" />
+                <div v-else class="dish-thumb-placeholder">{{ getCatIcon(dish.category) }}</div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="font-medium text-sm" style="color:var(--ink);">{{ dish.name }}</div>
+                <div v-if="dish.note" class="text-xs mt-0.5" style="color:var(--ink-muted);">{{ dish.note }}</div>
+                <label class="btn-ghost mt-1.5 inline-flex items-center gap-1 cursor-pointer" style="position:relative;overflow:hidden;">
+                  <input type="file" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer;" @change="e => handleDishPhoto(e, dish)" />
+                  <span>{{ dish.photo ? '换照片' : '＋ 加图' }}</span>
+                </label>
+              </div>
+              <button class="btn-ghost danger flex-shrink-0" @click="removeDish(dish.id)">删除</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-else class="text-center py-12">
+        <div class="empty-art">🥘</div>
+        <p class="mt-3 text-sm" style="color:var(--ink-muted);">还没有菜品，快加几道拿手菜吧～</p>
+      </div>
+
+    </div>
+
+    <!-- ══ GUEST MODE ══ -->
+    <div v-if="mode === 'guest'" class="max-w-lg mx-auto px-4 py-5" style="padding-bottom:110px;">
+
+      <div class="card p-4 mb-5 text-center" style="background:linear-gradient(135deg,#fff8f0 0%,#fef3e8 100%);">
+        <div class="text-2xl mb-1">💕</div>
+        <p class="serif font-semibold" style="color:var(--ink); font-size:15px;">今天想吃什么呀？</p>
+        <p class="text-xs mt-1" style="color:var(--ink-muted);">挑好了点"发给大厨"，TA 会马上看到 ❤️</p>
+      </div>
+
+      <div v-if="loading" class="text-center py-16">
+        <div style="font-size:32px; animation: pulse 1s infinite;">🍳</div>
+        <p class="mt-3 text-sm" style="color:var(--ink-muted);">加载菜单中…</p>
+      </div>
+
+      <div v-else-if="dishes.length === 0" class="text-center py-16">
+        <div class="empty-art">🍽️</div>
+        <p class="mt-3 text-sm" style="color:var(--ink-muted);">大厨还没录入菜品呢</p>
+        <p class="text-xs mt-1" style="color:var(--ink-muted);">让 TA 先去"大厨管理"添加菜单吧 👆</p>
+      </div>
+
+      <div v-else>
+        <div v-for="cat in categoriesWithDishes" :key="cat.id" class="mb-5">
+          <div class="cat-header">
+            <span class="text-base">{{ cat.icon }}</span>
+            <span class="serif text-sm font-semibold" style="color:var(--ink);">{{ cat.name }}</span>
+            <div class="cat-line"></div>
+          </div>
+          <div class="dish-grid">
+            <div v-for="dish in cat.dishes" :key="dish.id"
+              class="menu-card" :class="{ 'photo-ordered-ring': isOrdered(dish.id) }">
+              <div style="position:relative;">
+                <img v-if="dish.photo" :src="dish.photo" class="menu-photo"
+                  @click="lightbox = dish.photo" style="cursor:zoom-in;" />
+                <div v-else class="menu-photo-placeholder">{{ getCatIcon(dish.category) }}</div>
+                <div v-if="isOrdered(dish.id)"
+                  style="position:absolute;top:6px;left:6px;background:#22a36b;color:white;border-radius:999px;font-size:10px;padding:2px 8px;font-weight:600;">
+                  ✓ 已点
+                </div>
+              </div>
+              <div class="flex items-center gap-2 px-2.5 py-2">
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium text-xs leading-snug" style="color:var(--ink);">{{ dish.name }}</div>
+                  <div v-if="dish.note" class="text-xs mt-0.5 truncate" style="color:var(--ink-muted);font-size:10px;">{{ dish.note }}</div>
+                </div>
+                <button class="btn-add" :class="{ added: isOrdered(dish.id) }" @click="toggleOrder(dish)">
+                  <span v-if="isOrdered(dish.id)" style="font-size:13px;line-height:1;">✓</span>
+                  <span v-else style="font-size:19px;line-height:1;margin-top:-1px;">＋</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FLOATING ORDER BAR -->
+    <transition name="bar">
+      <div v-if="mode === 'guest' && dishes.length > 0" class="float-bar" @click="showSheet = true">
+        <div class="flex items-center gap-2">
+          <span class="text-base">🛎️</span>
+          <span class="text-sm font-medium">我的点单</span>
+          <span class="float-badge">{{ orderedDishes.length }}</span>
+        </div>
+        <div class="flex items-center gap-1 text-sm opacity-80">
+          <span>查看</span><span>›</span>
+        </div>
+      </div>
+    </transition>
+
+    <!-- BOTTOM SHEET -->
+    <transition name="overlay">
+      <div v-if="showSheet" class="bottom-sheet-overlay" @click.self="showSheet = false">
+        <div class="bottom-sheet">
+          <div class="flex justify-center mb-4">
+            <div style="width:36px;height:4px;background:var(--border);border-radius:2px;"></div>
+          </div>
+          <div class="ornament-divider mb-4">
+            <span class="serif text-sm font-semibold tracking-widest" style="color:var(--ink);">今日菜单</span>
+          </div>
+
+          <div v-if="orderedDishes.length === 0" class="text-center py-8">
+            <div class="empty-art">🍽️</div>
+            <p class="mt-2 text-sm" style="color:var(--ink-muted);">还没有点菜，去挑几道吧～</p>
+          </div>
+
+          <div v-else class="flex flex-col gap-2 mb-4">
+            <div v-for="dish in orderedDishes" :key="dish.id"
+              class="flex items-center gap-3 p-2.5 rounded-xl" style="background:var(--cream);">
+              <img v-if="dish.photo" :src="dish.photo"
+                style="width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;border:1px solid var(--border);"
+                @click="lightbox = dish.photo" />
+              <div v-else style="width:44px;height:44px;border-radius:8px;background:var(--warm-white);border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">
+                {{ getCatIcon(dish.category) }}
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-medium" style="color:var(--ink);">{{ dish.name }}</div>
+                <div v-if="dish.note" class="text-xs" style="color:var(--ink-muted);">{{ dish.note }}</div>
+              </div>
+              <button class="btn-remove" @click="removeOrder(dish.id)">✕</button>
+            </div>
+          </div>
+
+          <div v-if="orderedDishes.length > 0"
+            class="rounded-xl p-3 mb-4 text-sm leading-relaxed"
+            style="background:#fff8f0;border:1px dashed var(--accent-soft);color:var(--ink-soft);">
+            {{ previewText }}
+          </div>
+
+          <button v-if="orderedDishes.length > 0"
+            class="btn-send" :class="{ sent: sendState === 'sent' }"
+            @click="sendOrder" :disabled="sendState === 'sending'">
+            <span v-if="sendState === 'idle'">💌 发给大厨</span>
+            <span v-else-if="sendState === 'sending'">发送中…</span>
+            <span v-else>✓ 大厨已收到！</span>
+          </button>
+
+          <button v-if="orderedDishes.length === 0" class="btn-send" @click="showSheet = false">
+            去挑菜 ›
+          </button>
+
+          <div v-if="orderedDishes.length > 0" class="text-center mt-3">
+            <button style="font-size:12px;color:var(--ink-muted);background:none;border:none;cursor:pointer;font-family:inherit;" @click="clearOrder">清空点单</button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+  </div><!-- end main app -->
+
+</div><!-- end #app -->
+
+<script>
+const { createApp, ref, computed, onMounted, onUnmounted } = Vue;
+
+// ── Supabase config (hardcoded so guests don't need to set anything up) ──
+const SUPABASE_URL = 'https://expdrfyjioadqazauauv.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4cGRyZnlqaW9hZHFhemF1YXV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzNzk2OTUsImV4cCI6MjA5Nzk1NTY5NX0.dZdA04huEf3mDbQIES89F9becTEC7_GWAL1lOK_nra0';
+
+createApp({
+  setup() {
+    // ── State ──
+    const mode = ref('chef');
+    const dishes = ref([]);
+    const orderedIds = ref([]);
+    const showSheet = ref(false);
+    const sendState = ref('idle'); // idle | sending | sent
+    const toast = ref({ show: false, msg: '' });
+    const lightbox = ref(null);
+    const loading = ref(false);
+    const saving = ref(false);
+    const syncing = ref(false);
+    const syncError = ref(false);
+    const latestOrder = ref(null);
+    const newOrderAlert = ref(false);
+    const newDish = ref({ name: '', category: 'hot', note: '', photo: '' });
+    let pollTimer = null;
+    let lastOrderId = null;
+
+    const categories = [
+      { id: 'staple', name: '主食', icon: '🍚' },
+      { id: 'hot',    name: '热炒', icon: '🔥' },
+      { id: 'cold',   name: '凉菜', icon: '🥗' },
+      { id: 'soup',   name: '汤品', icon: '🍲' },
+      { id: 'sweet',  name: '甜品', icon: '🍮' },
+      { id: 'other',  name: '其他', icon: '🍴' },
+    ];
+
+    function getCatIcon(catId) {
+      return (categories.find(c => c.id === catId) || {}).icon || '🍴';
+    }
+
+    const categoriesWithDishes = computed(() =>
+      categories
+        .map(cat => ({ ...cat, dishes: dishes.value.filter(d => d.category === cat.id) }))
+        .filter(cat => cat.dishes.length > 0)
+    );
+
+    const orderedDishes = computed(() =>
+      orderedIds.value.map(id => dishes.value.find(d => d.id === id)).filter(Boolean)
+    );
+
+    const previewText = computed(() => {
+      const names = orderedDishes.value.map(d => d.note ? `${d.name}（${d.note}）` : d.name);
+      return `老公老公！今晚我想吃：【${names.join('、')}】！请大厨接单 ❤️`;
+    });
+
+    // ── Supabase helpers ──
+    async function sbFetch(path, options = {}) {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+        ...options,
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': options.prefer || '',
+          ...options.headers,
+        },
+      });
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error(err);
+      }
+      const text = await res.text();
+      return text ? JSON.parse(text) : null;
+    }
+
+    // ── Supabase data ops ──
+    async function fetchDishes() {
+      try {
+        syncing.value = true;
+        const data = await sbFetch('dishes?select=*&order=created_at.asc');
+        if (data) dishes.value = data;
+        syncError.value = false;
+      } catch(e) {
+        syncError.value = true;
+        showToast('菜单加载失败，请检查网络');
+      } finally {
+        syncing.value = false;
+      }
+    }
+
+    async function fetchLatestOrder() {
+      try {
+        const data = await sbFetch('orders?select=*&order=created_at.desc&limit=1');
+        if (data && data.length > 0) {
+          const order = data[0];
+          // Hydrate dish details into order items
+          const ids = order.dish_ids || [];
+          order.items = ids.map(id => dishes.value.find(d => d.id === id)).filter(Boolean);
+          if (lastOrderId && order.id !== lastOrderId) {
+            newOrderAlert.value = true;
+            showToast('🛎️ 宝贝下单了！');
+          }
+          lastOrderId = order.id;
+          latestOrder.value = order;
+        }
+      } catch(e) {}
+    }
+
+    async function addDish() {
+      if (!newDish.value.name.trim()) { showToast('请输入菜名 🙏'); return; }
+      const dish = {
+        name: newDish.value.name.trim(),
+        category: newDish.value.category,
+        note: newDish.value.note.trim(),
+        photo: newDish.value.photo || '',
+      };
+      try {
+        saving.value = true;
+        const data = await sbFetch('dishes', {
+          method: 'POST',
+          prefer: 'return=representation',
+          body: JSON.stringify(dish),
+        });
+        if (data && data[0]) dishes.value.push(data[0]);
+        showToast(`「${dish.name}」已加入菜单 ✓`);
+        newDish.value = { name: '', category: newDish.value.category, note: '', photo: '' };
+      } catch(e) {
+        showToast('添加失败，请重试');
+      } finally {
+        saving.value = false;
+      }
+    }
+
+    async function removeDish(id) {
+      try {
+        await sbFetch(`dishes?id=eq.${id}`, { method: 'DELETE' });
+        dishes.value = dishes.value.filter(d => d.id !== id);
+        orderedIds.value = orderedIds.value.filter(i => i !== id);
+      } catch(e) { showToast('删除失败'); }
+    }
+
+    async function handleDishPhoto(e, dish) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const photo = await compressImage(file);
+      try {
+        await sbFetch(`dishes?id=eq.${dish.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ photo }),
+        });
+        dish.photo = photo;
+        showToast('照片已更新 ✓');
+      } catch(e) { showToast('照片更新失败'); }
+    }
+
+    async function sendOrder() {
+      if (!orderedDishes.value.length) return;
+      sendState.value = 'sending';
+
+      const orderData = {
+        dish_ids: orderedIds.value,
+        message: previewText.value,
+      };
+
+      try {
+        await sbFetch('orders', {
+          method: 'POST',
+          prefer: 'return=minimal',
+          body: JSON.stringify(orderData),
+        });
+        await copyToClipboard(previewText.value);
+        sendState.value = 'sent';
+        showToast('已发给大厨，TA 马上就能看到 💕');
+        showSheet.value = false;
+        setTimeout(() => { sendState.value = 'idle'; clearOrder(); }, 3500);
+      } catch(e) {
+        sendState.value = 'idle';
+        showToast('发送失败，请重试');
+      }
+    }
+
+    async function copyToClipboard(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch(e) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;opacity:0;';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+    }
+
+    // ── Polling ──
+    function startPolling() {
+      pollTimer = setInterval(async () => {
+        await fetchDishes();
+        if (mode.value === 'chef') await fetchLatestOrder();
+      }, 8000); // every 8s
+    }
+
+    function stopPolling() {
+      if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    }
+
+    function switchToGuest() {
+      mode.value = 'guest';
+      fetchDishes();
+    }
+
+    function viewNewOrder() {
+      newOrderAlert.value = false;
+    }
+
+    // ── Image utils ──
+    function compressImage(file, maxW = 600) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const img = new Image();
+          img.onload = () => {
+            const scale = Math.min(1, maxW / img.width);
+            const w = Math.round(img.width * scale);
+            const h = Math.round(img.height * scale);
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/jpeg', 0.78));
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function handleNewPhoto(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      newDish.value.photo = await compressImage(file);
+    }
+
+    // ── Order helpers ──
+    function isOrdered(id) { return orderedIds.value.includes(id); }
+    function toggleOrder(dish) {
+      if (isOrdered(dish.id)) orderedIds.value = orderedIds.value.filter(i => i !== dish.id);
+      else orderedIds.value.push(dish.id);
+    }
+    function removeOrder(id) { orderedIds.value = orderedIds.value.filter(i => i !== id); }
+    function clearOrder() { orderedIds.value = []; }
+
+    // ── Utils ──
+    function formatTime(ts) {
+      if (!ts) return '';
+      const d = new Date(ts);
+      const now = new Date();
+      const diff = Math.floor((now - d) / 60000);
+      if (diff < 1) return '刚刚';
+      if (diff < 60) return `${diff} 分钟前`;
+      if (diff < 1440) return `${Math.floor(diff/60)} 小时前`;
+      return `${d.getMonth()+1}月${d.getDate()}日`;
+    }
+
+    function showToast(msg) {
+      toast.value = { show: true, msg };
+      setTimeout(() => { toast.value.show = false; }, 2500);
+    }
+
+    // ── Init ──
+    async function init() {
+      loading.value = true;
+      await fetchDishes();
+      await fetchLatestOrder();
+      loading.value = false;
+      startPolling();
+    }
+
+    onMounted(() => {
+      init();
+    });
+
+    onUnmounted(() => stopPolling());
+
+    return {
+      mode, dishes, orderedIds, showSheet, sendState, toast, lightbox,
+      loading, saving, syncing, syncError, latestOrder, newOrderAlert,
+      newDish, categories, getCatIcon,
+      categoriesWithDishes, orderedDishes, previewText,
+      addDish, removeDish, isOrdered, toggleOrder,
+      removeOrder, clearOrder, sendOrder,
+      handleNewPhoto, handleDishPhoto,
+      switchToGuest, viewNewOrder, formatTime,
+    };
+  }
+}).mount('#app');
+</script>
+
+<style>
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+.bar-enter-active, .bar-leave-active { transition: all 0.25s cubic-bezier(0.32,0.72,0,1); }
+.bar-enter-from, .bar-leave-to { opacity: 0; transform: translateX(-50%) translateY(20px); }
+.overlay-enter-active, .overlay-leave-active { transition: opacity 0.2s ease; }
+.overlay-enter-from, .overlay-leave-to { opacity: 0; }
+</style>
+
+</body>
+</html>
