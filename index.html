@@ -19,6 +19,8 @@
       --accent-soft: #e8845a;
       --gold: #b8860b;
       --border: #e8d5b0;
+      --coin: #c98a1f;
+      --coin-soft: #fff3da;
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
@@ -26,6 +28,7 @@
       font-family: 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
       color: var(--ink);
       min-height: 100vh;
+      transition: background-color 0.6s ease;
     }
     .serif { font-family: 'Noto Serif SC', 'STSong', 'SimSun', serif; }
     .paper {
@@ -174,7 +177,7 @@
     .bottom-sheet {
       background: var(--warm-white);
       border-radius: 20px 20px 0 0;
-      width: 100%; max-height: 82vh;
+      width: 100%; max-height: 86vh;
       overflow-y: auto; padding: 20px 20px 44px;
       animation: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1);
     }
@@ -182,7 +185,7 @@
     .lightbox-overlay {
       position: fixed; inset: 0;
       background: rgba(0,0,0,0.88);
-      z-index: 80; display: flex;
+      z-index: 90; display: flex;
       align-items: center; justify-content: center; padding: 20px;
     }
     .lightbox-overlay img { max-width: 100%; max-height: 90vh; border-radius: 10px; object-fit: contain; }
@@ -205,6 +208,7 @@
       font-family: 'Noto Sans SC', sans-serif;
     }
     .btn-send:active { transform: scale(0.98); }
+    .btn-send:disabled { opacity: 0.6; cursor: default; }
     .btn-send.sent { background: linear-gradient(135deg, #22a36b 0%, #1a8a58 100%); box-shadow: 0 4px 16px rgba(34,163,107,0.35); }
     .btn-primary {
       background: var(--ink); color: white; border: none;
@@ -213,6 +217,7 @@
       font-family: 'Noto Sans SC', sans-serif; transition: opacity 0.15s;
     }
     .btn-primary:active { opacity: 0.85; }
+    .btn-primary:disabled { opacity: 0.6; cursor: default; }
     .btn-ghost {
       background: transparent; border: 1px solid var(--border);
       border-radius: 8px; padding: 5px 11px;
@@ -245,6 +250,7 @@
       white-space: nowrap;
       box-shadow: 0 4px 16px rgba(0,0,0,0.2);
       animation: toastIn 0.25s ease;
+      max-width: 90vw; text-align: center;
     }
     @keyframes toastIn {
       from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
@@ -262,24 +268,9 @@
     @media (min-width: 420px) { .dish-grid { grid-template-columns: 1fr 1fr 1fr; } }
     .photo-ordered-ring { outline: 3px solid #22a36b; outline-offset: 2px; }
 
-    /* Setup screen */
-    .setup-screen {
-      min-height: 100vh;
-      display: flex; align-items: center; justify-content: center;
-      padding: 24px;
-    }
-    .setup-card {
-      background: var(--warm-white);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 32px 24px;
-      width: 100%; max-width: 420px;
-      box-shadow: 0 8px 32px rgba(44,26,14,0.1);
-    }
     .input-group { display: flex; flex-direction: column; gap: 6px; }
     .input-group label { font-size: 13px; font-weight: 500; color: var(--ink-soft); }
 
-    /* Order notification dot */
     .notif-dot {
       width: 8px; height: 8px;
       background: var(--accent);
@@ -292,7 +283,6 @@
       50% { opacity: 0.6; transform: scale(0.8); }
     }
 
-    /* Order history card */
     .order-card {
       background: var(--warm-white);
       border: 1px solid var(--border);
@@ -312,9 +302,170 @@
     }
     .sync-dot.syncing { background: var(--gold); animation: pulse 1s infinite; }
     .sync-dot.error { background: var(--accent); }
+
+    /* ── Love coins ── */
+    .coin-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--coin-soft); border: 1px solid #f0d99a;
+      border-radius: 999px; padding: 5px 12px;
+      font-size: 13px; font-weight: 600; color: var(--coin);
+      cursor: pointer; transition: transform 0.15s;
+    }
+    .coin-badge:active { transform: scale(0.96); }
+    .star-row { display: flex; gap: 4px; }
+    .star-btn {
+      background: none; border: none; cursor: pointer;
+      font-size: 26px; line-height: 1; padding: 2px;
+      color: var(--border); transition: transform 0.1s;
+    }
+    .star-btn.filled { color: var(--coin); }
+    .star-btn:active { transform: scale(1.2); }
+    .reward-card {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--warm-white); border: 1px solid var(--border);
+      border-radius: 12px; padding: 10px 12px;
+    }
+    .review-item {
+      background: var(--warm-white); border: 1px solid var(--border);
+      border-radius: 12px; padding: 12px; margin-bottom: 10px;
+    }
+
+    /* ── Blind box ── */
+    .blindbox-trigger {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 14px;
+      border-radius: 14px; border: 1.5px dashed var(--accent-soft);
+      background: repeating-linear-gradient(135deg, #fff8f0, #fff8f0 10px, #fef0e2 10px, #fef0e2 20px);
+      color: var(--accent); font-weight: 600; font-size: 14px;
+      cursor: pointer; transition: transform 0.15s;
+    }
+    .blindbox-trigger:active { transform: scale(0.98); }
+    .blindbox-overlay {
+      position: fixed; inset: 0; background: rgba(44,26,14,0.6);
+      z-index: 70; display: flex; align-items: center; justify-content: center;
+      padding: 24px; backdrop-filter: blur(3px);
+    }
+    .blindbox-card {
+      background: var(--warm-white); border-radius: 22px;
+      padding: 28px 24px; max-width: 320px; width: 100%;
+      text-align: center; box-shadow: 0 16px 48px rgba(44,26,14,0.3);
+    }
+    .blindbox-shake { animation: boxShake 0.5s ease-in-out infinite; }
+    @keyframes boxShake {
+      0%, 100% { transform: rotate(0deg) scale(1); }
+      25% { transform: rotate(-8deg) scale(1.03); }
+      75% { transform: rotate(8deg) scale(1.03); }
+    }
+    .blindbox-reveal { animation: revealPop 0.45s cubic-bezier(0.34,1.56,0.64,1); }
+    @keyframes revealPop {
+      0% { transform: scale(0.4) rotate(-10deg); opacity: 0; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    /* ── Inventory ── */
+    .ing-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 6px 12px; border-radius: 999px;
+      font-size: 12px; font-weight: 500;
+      border: 1px solid var(--border);
+    }
+    .ing-chip.in-stock { background: #eaf7ef; color: #22a36b; border-color: #bfe5cd; }
+    .ing-chip.out-stock { background: #fbeae6; color: var(--accent); border-color: #f3cab9; opacity: 0.75; text-decoration: line-through; }
+    .ing-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 4px; border-bottom: 1px solid var(--border);
+    }
+    .toggle-switch {
+      width: 40px; height: 22px; border-radius: 999px;
+      background: var(--border); position: relative; cursor: pointer;
+      flex-shrink: 0; transition: background 0.2s; border: none;
+    }
+    .toggle-switch.on { background: #22a36b; }
+    .toggle-switch .knob {
+      position: absolute; top: 2px; left: 2px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: white; transition: transform 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .toggle-switch.on .knob { transform: translateX(18px); }
+
+    /* ── Easter egg ── */
+    .secret-overlay {
+      position: fixed; inset: 0; z-index: 95;
+      background: rgba(20,8,4,0.78);
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px; backdrop-filter: blur(4px);
+      animation: fadeInOnly 0.3s ease;
+    }
+    @keyframes fadeInOnly { from { opacity: 0; } to { opacity: 1; } }
+    .secret-card {
+      background: linear-gradient(160deg, #fff9f0, #fff2e0);
+      border-radius: 24px; padding: 34px 26px;
+      max-width: 340px; text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      animation: revealPop 0.5s cubic-bezier(0.34,1.56,0.64,1);
+      border: 1px solid #f0d9a8;
+      position: relative; overflow: hidden;
+    }
+    .floating-heart {
+      position: absolute; bottom: -10px; font-size: 18px;
+      opacity: 0; animation: floatUp 2.2s ease-in infinite;
+    }
+    @keyframes floatUp {
+      0% { opacity: 0; transform: translateY(0) scale(0.8); }
+      15% { opacity: 0.9; }
+      100% { opacity: 0; transform: translateY(-160px) scale(1.1); }
+    }
+    .header-heart { cursor: pointer; user-select: none; transition: transform 0.1s; display: inline-block; }
+    .header-heart:active { transform: scale(1.3); }
+
+    /* ── Festive mode ── */
+    body.festive {
+      background: linear-gradient(160deg, #2a1014 0%, #3d1620 55%, #2a1014 100%);
+    }
+    body.festive .paper {
+      background-color: #3a1620;
+      background-image: radial-gradient(circle at 30% 0%, rgba(232,132,90,0.08), transparent 60%);
+      border-color: #5c2433 !important;
+    }
+    body.festive .card,
+    body.festive .menu-card,
+    body.festive .order-card,
+    body.festive .reward-card,
+    body.festive .review-item,
+    body.festive .bottom-sheet,
+    body.festive .blindbox-card {
+      background: #3a1620;
+      border-color: #5c2433;
+      color: #f5e6d8;
+    }
+    body.festive .ing-row { border-color: #5c2433; }
+    body.festive h1, body.festive .serif { color: #f5dcc0 !important; }
+    body.festive p, body.festive span, body.festive div, body.festive label { color: inherit; }
+    body.festive .text-ink, body.festive [style*="--ink"] {}
+    body.festive input, body.festive textarea, body.festive select {
+      background: #2a1014; border-color: #5c2433; color: #f5e6d8;
+    }
+    body.festive .dish-thumb-placeholder, body.festive .menu-photo-placeholder {
+      background: linear-gradient(135deg, #4a1c28, #3a1620);
+    }
+    body.festive .cat-line { background: #5c2433; }
+    .festive-banner {
+      background: linear-gradient(135deg, #6b1f30, #8a2d40);
+      color: #ffe9d0; border-radius: 14px;
+      padding: 14px 16px; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 10px;
+      box-shadow: 0 4px 20px rgba(139,30,50,0.4);
+      position: relative; overflow: hidden;
+    }
+    .festive-banner .spark {
+      position: absolute; font-size: 14px; opacity: 0.5;
+      animation: sparkle 2.4s ease-in-out infinite;
+    }
+    @keyframes sparkle { 0%,100%{opacity:.2; transform:scale(0.8);} 50%{opacity:.8; transform:scale(1.1);} }
   </style>
 </head>
-<body>
+<body :class="{ festive: festiveActive }">
 
 <div id="app">
 
@@ -331,6 +482,67 @@
     </div>
   </transition>
 
+  <!-- Secret message (easter egg) -->
+  <transition name="fade">
+    <div v-if="secretMsg.show" class="secret-overlay" @click="secretMsg.show = false">
+      <div class="secret-card" @click.stop>
+        <span class="floating-heart" style="left:15%; animation-delay:0s;">💗</span>
+        <span class="floating-heart" style="left:45%; animation-delay:0.5s;">💕</span>
+        <span class="floating-heart" style="left:70%; animation-delay:1s;">💞</span>
+        <span class="floating-heart" style="left:30%; animation-delay:1.5s;">❤️</span>
+        <div style="font-size:38px; margin-bottom:10px;">💌</div>
+        <p class="serif text-xs tracking-widest mb-3" style="color:var(--gold); letter-spacing:0.15em;">秘密message</p>
+        <p class="serif text-base leading-relaxed" style="color:var(--ink); white-space:pre-wrap;">{{ secretMsg.text }}</p>
+        <button class="btn-primary mt-5" @click="secretMsg.show = false" style="padding:10px 28px;">知道啦 ❤️</button>
+      </div>
+    </div>
+  </transition>
+
+  <!-- Blind box overlay -->
+  <transition name="fade">
+    <div v-if="blindbox.show" class="blindbox-overlay" @click.self="closeBlindbox">
+      <div class="blindbox-card">
+        <template v-if="blindbox.stage === 'shaking'">
+          <div class="blindbox-shake" style="font-size:64px;">🎁</div>
+          <p class="serif text-sm mt-4" style="color:var(--ink-soft);">命运的盲盒正在摇晃…</p>
+        </template>
+        <template v-else-if="blindbox.dish">
+          <div class="blindbox-reveal">
+            <p class="serif text-xs tracking-widest mb-3" style="color:var(--gold);">✨ 今天就吃这个 ✨</p>
+            <img v-if="blindbox.dish.photo" :src="blindbox.dish.photo"
+              style="width:100%;height:160px;object-fit:cover;border-radius:14px;margin-bottom:12px;border:1px solid var(--border);" />
+            <div v-else style="font-size:56px;margin-bottom:8px;">{{ getCatIcon(blindbox.dish.category) }}</div>
+            <p class="serif text-xl font-semibold" style="color:var(--ink);">{{ blindbox.dish.name }}</p>
+            <p v-if="blindbox.dish.note" class="text-xs mt-1" style="color:var(--ink-muted);">{{ blindbox.dish.note }}</p>
+          </div>
+          <div class="flex gap-2 mt-5">
+            <button class="btn-ghost flex-1" style="padding:10px;" @click="closeBlindbox">关闭</button>
+            <button class="btn-primary flex-1" @click="confirmBlindbox">＋ 加入点单</button>
+          </div>
+          <button class="btn-ghost mt-2" style="font-size:11px;" @click="rollBlindbox">🔄 不要这个，再抽一次</button>
+        </template>
+        <template v-else>
+          <div style="font-size:48px;">🥺</div>
+          <p class="serif text-sm mt-3" style="color:var(--ink-muted);">菜单还是空的，大厨先去加几道菜吧</p>
+          <button class="btn-primary mt-4" @click="closeBlindbox">好嘞</button>
+        </template>
+      </div>
+    </div>
+  </transition>
+
+  <!-- Redemption notice (guest side) -->
+  <transition name="fade">
+    <div v-if="redemptionPopup.show" class="secret-overlay" @click="redemptionPopup.show = false">
+      <div class="secret-card" @click.stop>
+        <div style="font-size:40px;">🎉</div>
+        <p class="serif text-xs tracking-widest mt-2 mb-2" style="color:var(--gold);">大厨兑换了奖励</p>
+        <p class="serif text-lg font-semibold" style="color:var(--ink);">{{ redemptionPopup.icon }} {{ redemptionPopup.name }}</p>
+        <p class="text-xs mt-2" style="color:var(--ink-muted);">花费了 {{ redemptionPopup.cost }} 枚爱心币，请兑现哦～</p>
+        <button class="btn-primary mt-5" @click="redemptionPopup.show = false" style="padding:10px 28px;">好的呀 💕</button>
+      </div>
+    </div>
+  </transition>
+
   <!-- ══════════════════════════════════════
        MAIN APP
   ══════════════════════════════════════ -->
@@ -342,14 +554,16 @@
         <div class="flex items-center gap-2">
           <span style="font-size:20px">🍜</span>
           <h1 class="serif text-lg font-semibold tracking-widest" style="color:var(--ink); letter-spacing:0.12em;">私房小厨</h1>
-          <span style="font-size:20px">🍜</span>
+          <span class="header-heart" style="font-size:20px" @click="tapHeart">❤️</span>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 flex-wrap justify-center">
           <div class="mode-pill">
             <button :class="{ active: mode === 'chef' }" @click="mode = 'chef'">👨‍🍳 大厨管理</button>
             <button :class="{ active: mode === 'guest' }" @click="switchToGuest">💕 宝贝点单</button>
           </div>
-          <!-- Sync status -->
+          <div class="coin-badge" @click="mode = 'chef'; showRewardShop = true" title="爱心币余额">
+            <span>🪙</span><span>{{ coinBalance }}</span>
+          </div>
           <div class="sync-indicator">
             <span class="sync-dot" :class="{ syncing: syncing, error: syncError }"></span>
             <span>{{ syncing ? '同步中' : syncError ? '断线' : '已同步' }}</span>
@@ -357,6 +571,19 @@
         </div>
       </div>
     </header>
+
+    <div class="max-w-lg mx-auto px-4 pt-4" v-if="festiveActive">
+      <div class="festive-banner">
+        <span class="spark" style="top:6px; left:10%;">✨</span>
+        <span class="spark" style="top:60%; left:80%; animation-delay:1s;">✨</span>
+        <span style="font-size:24px;">🕯️</span>
+        <div class="flex-1">
+          <p class="text-sm font-semibold">{{ festiveLabel }}限定主题已开启</p>
+          <p class="text-xs opacity-80 mt-0.5">烛光晚餐氛围，今晚要不要点点浪漫的菜？</p>
+        </div>
+        <button class="btn-ghost" style="border-color:rgba(255,255,255,0.3); color:#ffe9d0;" @click="festiveOverride = false">退出</button>
+      </div>
+    </div>
 
     <!-- ══ CHEF MODE ══ -->
     <div v-if="mode === 'chef'" class="max-w-lg mx-auto px-4 py-5" style="padding-bottom:40px;">
@@ -397,6 +624,121 @@
             </div>
           </div>
           <p class="text-xs p-2 rounded-lg" style="background:#fff0e8; color:var(--ink-soft); line-height:1.6;">{{ latestOrder.message }}</p>
+          <div v-if="latestOrder.rating" class="flex items-center gap-1 mt-2 text-xs" style="color:var(--coin);">
+            <span v-for="n in 5" :key="n">{{ n <= latestOrder.rating ? '★' : '☆' }}</span>
+            <span class="ml-1" style="color:var(--ink-muted);">宝贝已评分</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Love coins & reward shop -->
+      <div class="mb-5">
+        <div class="ornament-divider mb-3"><span class="serif text-xs tracking-widest" style="color:var(--gold);">爱心积分 · 兑换商店</span></div>
+        <div class="card p-4">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <p class="text-xs" style="color:var(--ink-muted);">当前余额</p>
+              <p class="serif text-2xl font-semibold" style="color:var(--coin);">🪙 {{ coinBalance }}</p>
+            </div>
+            <button class="btn-ghost" @click="showRewardShop = !showRewardShop">{{ showRewardShop ? '收起' : '管理商店' }}</button>
+          </div>
+
+          <div v-if="showRewardShop">
+            <div v-if="rewards.length" class="flex flex-col gap-2 mb-3">
+              <div v-for="r in rewards" :key="r.id" class="reward-card">
+                <span style="font-size:22px;">{{ r.icon }}</span>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-medium" style="color:var(--ink);">{{ r.name }}</div>
+                  <div class="text-xs" style="color:var(--coin);">🪙 {{ r.cost }}</div>
+                </div>
+                <button class="btn-primary" style="padding:7px 12px; font-size:12px;"
+                  :disabled="coinBalance < r.cost" @click="redeemReward(r)">兑换</button>
+                <button class="btn-remove" @click="removeReward(r.id)">✕</button>
+              </div>
+            </div>
+            <p v-else class="text-xs text-center py-3" style="color:var(--ink-muted);">还没有奖励，加一个吧～</p>
+
+            <div class="flex gap-2">
+              <input v-model="newReward.icon" placeholder="🎁" maxlength="2" style="width:54px; text-align:center; flex-shrink:0;" />
+              <input v-model="newReward.name" placeholder="奖励名称，例如：一次洗碗服务" maxlength="20" />
+              <input v-model.number="newReward.cost" type="number" placeholder="花费" style="width:72px; flex-shrink:0;" />
+            </div>
+            <button class="btn-primary w-full mt-2" @click="addReward">＋ 添加奖励</button>
+
+            <div v-if="redemptionHistory.length" class="mt-4">
+              <p class="text-xs font-medium mb-2" style="color:var(--ink-soft);">兑换记录</p>
+              <div v-for="h in redemptionHistory.slice(0,5)" :key="h.id" class="text-xs flex justify-between py-1" style="color:var(--ink-muted);">
+                <span>{{ h.icon || '🎁' }} {{ h.reward_name }}</span>
+                <span>-{{ h.cost }} 🪙 · {{ formatTime(h.created_at) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reviews history (买家秀) -->
+      <div v-if="reviewedOrders.length" class="mb-5">
+        <div class="ornament-divider mb-3"><span class="serif text-xs tracking-widest" style="color:var(--gold);">历史评价 · 买家秀</span></div>
+        <button class="btn-ghost w-full mb-2" style="padding:8px;" @click="showReviews = !showReviews">{{ showReviews ? '收起' : `查看全部 ${reviewedOrders.length} 条评价` }}</button>
+        <div v-if="showReviews">
+          <div v-for="o in reviewedOrders" :key="o.id" class="review-item">
+            <div class="flex items-center justify-between mb-1.5">
+              <span style="color:var(--coin); font-size:13px;">
+                <span v-for="n in 5" :key="n">{{ n <= o.rating ? '★' : '☆' }}</span>
+              </span>
+              <span class="text-xs" style="color:var(--ink-muted);">{{ formatTime(o.reviewed_at || o.created_at) }}</span>
+            </div>
+            <p v-if="o.review" class="text-sm leading-relaxed" style="color:var(--ink-soft);">"{{ o.review }}"</p>
+            <p class="text-xs mt-1.5" style="color:var(--ink-muted);">{{ (o.items||[]).map(i=>i.name).join('、') }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ingredient inventory -->
+      <div class="mb-5">
+        <div class="ornament-divider mb-3"><span class="serif text-xs tracking-widest" style="color:var(--gold);">食材库存看板</span></div>
+        <div class="card p-4">
+          <div v-if="ingredients.length" class="mb-3">
+            <div v-for="ing in ingredients" :key="ing.id" class="ing-row">
+              <button class="toggle-switch" :class="{ on: ing.in_stock }" @click="toggleIngredient(ing)">
+                <span class="knob"></span>
+              </button>
+              <span class="flex-1 text-sm" :style="{ color: ing.in_stock ? 'var(--ink)' : 'var(--ink-muted)', textDecoration: ing.in_stock ? 'none' : 'line-through' }">{{ ing.name }}</span>
+              <button class="btn-remove" @click="removeIngredient(ing.id)">✕</button>
+            </div>
+          </div>
+          <p v-else class="text-xs text-center py-2 mb-2" style="color:var(--ink-muted);">还没有添加食材</p>
+          <div class="flex gap-2">
+            <input v-model="newIngredient" placeholder="例如：青椒、鸡蛋、五花肉" maxlength="16" @keyup.enter="addIngredient" />
+            <button class="btn-primary flex-shrink-0" @click="addIngredient">添加</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Festive & secret settings -->
+      <div class="mb-5">
+        <div class="ornament-divider mb-3"><span class="serif text-xs tracking-widest" style="color:var(--gold);">纪念日 · 隐藏彩蛋设置</span></div>
+        <div class="card p-4 flex flex-col gap-3">
+          <div class="input-group">
+            <label>纪念日日期（每年自动开启烛光主题）</label>
+            <input type="date" v-model="settings.anniversary_date" @change="saveSettings" />
+          </div>
+          <label class="flex items-center gap-2 text-xs" style="color:var(--ink-soft);">
+            <input type="checkbox" v-model="festiveManualOn" @change="saveSettings" style="width:auto;" />
+            手动开启节日主题（立刻生效，方便你预览）
+          </label>
+          <div class="input-group">
+            <label>隐藏情话（连续点击 Header 上的 ❤️ 5 次触发）</label>
+            <textarea v-model="settings.secret_message" rows="2" placeholder="例如：遇见你之后，每天想的都是该做什么好吃的给你吃。" @change="saveSettings"></textarea>
+          </div>
+          <div class="input-group">
+            <label>彩蛋触发菜（宝贝点了这道菜并发送后，也会弹出情话）</label>
+            <select v-model="settings.secret_trigger_dish_id" @change="saveSettings">
+              <option :value="null">不设置</option>
+              <option v-for="d in dishes" :key="d.id" :value="d.id">{{ d.name }}</option>
+            </select>
+          </div>
+          <button class="btn-ghost" style="align-self:flex-start;" @click="previewSecret">👀 预览彩蛋效果</button>
         </div>
       </div>
 
@@ -432,7 +774,7 @@
             </div>
           </div>
           <button class="btn-primary w-full" @click="addDish" :disabled="saving"
-            style="margin-top:2px; opacity: saving ? 0.7 : 1;">
+            style="margin-top:2px;">
             {{ saving ? '上传中…' : '＋ 加入菜单' }}
           </button>
         </div>
@@ -479,6 +821,36 @@
         <div class="text-2xl mb-1">💕</div>
         <p class="serif font-semibold" style="color:var(--ink); font-size:15px;">今天想吃什么呀？</p>
         <p class="text-xs mt-1" style="color:var(--ink-muted);">挑好了点"发给大厨"，TA 会马上看到 ❤️</p>
+      </div>
+
+      <!-- Blind box entry -->
+      <div class="mb-5">
+        <div class="blindbox-trigger" @click="openBlindbox">
+          <span style="font-size:18px;">🎁</span>
+          <span>不知道吃什么？抽个盲盒试试！</span>
+        </div>
+      </div>
+
+      <!-- Ingredient board (read-only) -->
+      <div v-if="ingredients.length" class="mb-5">
+        <button class="btn-ghost w-full flex items-center justify-between" style="padding:10px 14px;" @click="showIngredients = !showIngredients">
+          <span>🧺 今日食材库存</span>
+          <span>{{ showIngredients ? '收起 ▲' : '查看 ▼' }}</span>
+        </button>
+        <div v-if="showIngredients" class="card p-3 mt-2 flex flex-wrap gap-2">
+          <span v-for="ing in ingredients" :key="ing.id" class="ing-chip" :class="ing.in_stock ? 'in-stock' : 'out-stock'">
+            {{ ing.in_stock ? '✓' : '✕' }} {{ ing.name }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Orders to review -->
+      <div v-if="pendingReviewOrders.length" class="mb-5">
+        <div class="ornament-divider mb-3"><span class="serif text-xs tracking-widest" style="color:var(--gold);">吃完了？给大厨打个分吧</span></div>
+        <div v-for="o in pendingReviewOrders" :key="o.id" class="card p-3 mb-2">
+          <p class="text-xs mb-2" style="color:var(--ink-muted);">{{ formatTime(o.created_at) }} 的点单：{{ (o.items||[]).map(i=>i.name).join('、') }}</p>
+          <button class="btn-primary w-full" style="padding:9px;" @click="openReviewModal(o)">⭐ 评价这次的菜</button>
+        </div>
       </div>
 
       <div v-if="loading" class="text-center py-16">
@@ -599,12 +971,34 @@
       </div>
     </transition>
 
+    <!-- REVIEW MODAL -->
+    <transition name="overlay">
+      <div v-if="reviewModal.show" class="bottom-sheet-overlay" @click.self="reviewModal.show = false">
+        <div class="bottom-sheet">
+          <div class="flex justify-center mb-4">
+            <div style="width:36px;height:4px;background:var(--border);border-radius:2px;"></div>
+          </div>
+          <div class="ornament-divider mb-4">
+            <span class="serif text-sm font-semibold tracking-widest" style="color:var(--ink);">这次的菜怎么样？</span>
+          </div>
+          <div class="text-center mb-4">
+            <div class="star-row" style="justify-content:center;">
+              <button v-for="n in 5" :key="n" class="star-btn" :class="{ filled: n <= reviewModal.rating }" @click="reviewModal.rating = n">★</button>
+            </div>
+            <p class="text-xs mt-1" style="color:var(--ink-muted);">{{ reviewModal.rating ? reviewModal.rating*20 + ' 枚爱心币将送给大厨 🪙' : '点星星打分' }}</p>
+          </div>
+          <textarea v-model="reviewModal.text" rows="3" placeholder="写两句食评吧～大厨会偷偷回味很久的" maxlength="120"></textarea>
+          <button class="btn-send mt-4" :disabled="!reviewModal.rating" @click="submitReview">💝 提交评价</button>
+        </div>
+      </div>
+    </transition>
+
   </div><!-- end main app -->
 
 </div><!-- end #app -->
 
 <script>
-const { createApp, ref, computed, onMounted, onUnmounted } = Vue;
+const { createApp, ref, computed, onMounted, onUnmounted, watch } = Vue;
 
 // ── Supabase config (hardcoded so guests don't need to set anything up) ──
 const SUPABASE_URL = 'https://expdrfyjioadqazauauv.supabase.co';
@@ -612,12 +1006,12 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 createApp({
   setup() {
-    // ── State ──
+    // ── Core state ──
     const mode = ref('chef');
     const dishes = ref([]);
     const orderedIds = ref([]);
     const showSheet = ref(false);
-    const sendState = ref('idle'); // idle | sending | sent
+    const sendState = ref('idle');
     const toast = ref({ show: false, msg: '' });
     const lightbox = ref(null);
     const loading = ref(false);
@@ -629,6 +1023,27 @@ createApp({
     const newDish = ref({ name: '', category: 'hot', note: '', photo: '' });
     let pollTimer = null;
     let lastOrderId = null;
+
+    // ── New feature state ──
+    const orders = ref([]);            // full order history (hydrated)
+    const rewards = ref([]);
+    const redemptionHistory = ref([]);
+    const ingredients = ref([]);
+    const settings = ref({ anniversary_date: '', secret_message: '亲爱的，每次给你做饭都是我最快乐的时刻 ❤️', secret_trigger_dish_id: null });
+    const showRewardShop = ref(false);
+    const showReviews = ref(false);
+    const showIngredients = ref(false);
+    const newReward = ref({ icon: '🎁', name: '', cost: 100 });
+    const newIngredient = ref('');
+    const secretMsg = ref({ show: false, text: '' });
+    const heartTapCount = ref(0);
+    let heartTapTimer = null;
+    const blindbox = ref({ show: false, stage: 'shaking', dish: null });
+    const reviewModal = ref({ show: false, order: null, rating: 0, text: '' });
+    const redemptionPopup = ref({ show: false, name: '', icon: '', cost: 0 });
+    const festiveManualOn = ref(false);
+    const festiveOverride = ref(true); // allows dismissing for this session
+    let lastSeenRedemptionId = null;
 
     const categories = [
       { id: 'staple', name: '主食', icon: '🍚' },
@@ -658,6 +1073,32 @@ createApp({
       return `老公老公！今晚我想吃：【${names.join('、')}】！请大厨接单 ❤️`;
     });
 
+    // ── Love coins computed ──
+    const reviewedOrders = computed(() =>
+      orders.value.filter(o => o.rating).sort((a,b) => new Date(b.reviewed_at||b.created_at) - new Date(a.reviewed_at||a.created_at))
+    );
+    const pendingReviewOrders = computed(() =>
+      orders.value.filter(o => !o.rating).sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5)
+    );
+    const earnedCoins = computed(() => orders.value.reduce((sum, o) => sum + (o.coins_awarded || 0), 0));
+    const spentCoins = computed(() => redemptionHistory.value.reduce((sum, r) => sum + (r.cost || 0), 0));
+    const coinBalance = computed(() => Math.max(0, earnedCoins.value - spentCoins.value));
+
+    // ── Festive computed ──
+    const festiveLabel = ref('');
+    const festiveActive = computed(() => {
+      if (festiveManualOn.value && festiveOverride.value) { festiveLabel.value = '自定义'; return true; }
+      const today = new Date();
+      const mm = today.getMonth() + 1, dd = today.getDate();
+      if (mm === 2 && dd === 14) { festiveLabel.value = '情人节'; return festiveOverride.value; }
+      if (mm === 12 && (dd === 24 || dd === 25)) { festiveLabel.value = '圣诞节'; return festiveOverride.value; }
+      if (settings.value.anniversary_date) {
+        const ann = new Date(settings.value.anniversary_date);
+        if (ann.getMonth() + 1 === mm && ann.getDate() === dd) { festiveLabel.value = '纪念日'; return festiveOverride.value; }
+      }
+      return false;
+    });
+
     // ── Supabase helpers ──
     async function sbFetch(path, options = {}) {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
@@ -678,7 +1119,13 @@ createApp({
       return text ? JSON.parse(text) : null;
     }
 
-    // ── Supabase data ops ──
+    // Wrap optional-table calls so missing tables (before SQL migration is run) never crash the app
+    async function sbFetchSafe(path, options = {}) {
+      try { return await sbFetch(path, options); }
+      catch(e) { return null; }
+    }
+
+    // ── Core data ops ──
     async function fetchDishes() {
       try {
         syncing.value = true;
@@ -693,14 +1140,24 @@ createApp({
       }
     }
 
+    function hydrateOrder(order) {
+      const ids = order.dish_ids || [];
+      order.items = ids.map(id => dishes.value.find(d => d.id === id)).filter(Boolean);
+      return order;
+    }
+
+    async function fetchOrders() {
+      const data = await sbFetchSafe('orders?select=*&order=created_at.desc&limit=30');
+      if (data) {
+        orders.value = data.map(hydrateOrder);
+      }
+    }
+
     async function fetchLatestOrder() {
       try {
         const data = await sbFetch('orders?select=*&order=created_at.desc&limit=1');
         if (data && data.length > 0) {
-          const order = data[0];
-          // Hydrate dish details into order items
-          const ids = order.dish_ids || [];
-          order.items = ids.map(id => dishes.value.find(d => d.id === id)).filter(Boolean);
+          const order = hydrateOrder(data[0]);
           if (lastOrderId && order.id !== lastOrderId) {
             newOrderAlert.value = true;
             showToast('🛎️ 宝贝下单了！');
@@ -768,15 +1225,22 @@ createApp({
       };
 
       try {
-        await sbFetch('orders', {
+        const data = await sbFetch('orders', {
           method: 'POST',
-          prefer: 'return=minimal',
+          prefer: 'return=representation',
           body: JSON.stringify(orderData),
         });
         await copyToClipboard(previewText.value);
         sendState.value = 'sent';
         showToast('已发给大厨，TA 马上就能看到 💕');
         showSheet.value = false;
+
+        // Easter egg: ordering the trigger dish
+        const triggerId = settings.value.secret_trigger_dish_id;
+        if (triggerId && orderedIds.value.includes(Number(triggerId) || triggerId)) {
+          setTimeout(() => { secretMsg.value = { show: true, text: settings.value.secret_message || '有你在，每天都想做好吃的。' }; }, 600);
+        }
+
         setTimeout(() => { sendState.value = 'idle'; clearOrder(); }, 3500);
       } catch(e) {
         sendState.value = 'idle';
@@ -798,12 +1262,187 @@ createApp({
       }
     }
 
+    // ── Reviews & love coins ──
+    function openReviewModal(order) {
+      reviewModal.value = { show: true, order, rating: 0, text: '' };
+    }
+
+    async function submitReview() {
+      const { order, rating, text } = reviewModal.value;
+      if (!order || !rating) return;
+      const coins = rating * 20;
+      try {
+        await sbFetch(`orders?id=eq.${order.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ rating, review: text.trim(), coins_awarded: coins, reviewed_at: new Date().toISOString() }),
+        });
+        const local = orders.value.find(o => o.id === order.id);
+        if (local) { local.rating = rating; local.review = text.trim(); local.coins_awarded = coins; local.reviewed_at = new Date().toISOString(); }
+        reviewModal.value.show = false;
+        showToast(`评价已送出，大厨获得 ${coins} 枚爱心币 🪙`);
+      } catch(e) {
+        showToast('评价提交失败，请重试（可能需要先在 Supabase 添加 rating/review 字段）');
+      }
+    }
+
+    // ── Reward shop ──
+    async function fetchRewards() {
+      const data = await sbFetchSafe('rewards?select=*&order=created_at.asc');
+      if (data) rewards.value = data;
+    }
+
+    async function addReward() {
+      if (!newReward.value.name.trim() || !newReward.value.cost) { showToast('请填写奖励名称和花费'); return; }
+      const reward = { icon: newReward.value.icon || '🎁', name: newReward.value.name.trim(), cost: Number(newReward.value.cost) };
+      const data = await sbFetchSafe('rewards', { method: 'POST', prefer: 'return=representation', body: JSON.stringify(reward) });
+      if (data && data[0]) {
+        rewards.value.push(data[0]);
+        newReward.value = { icon: '🎁', name: '', cost: 100 };
+        showToast('奖励已添加 ✓');
+      } else {
+        showToast('添加失败，可能需要先创建 rewards 表（见说明文档）');
+      }
+    }
+
+    async function removeReward(id) {
+      const ok = await sbFetchSafe(`rewards?id=eq.${id}`, { method: 'DELETE' });
+      rewards.value = rewards.value.filter(r => r.id !== id);
+    }
+
+    async function fetchRedemptions() {
+      const data = await sbFetchSafe('redemptions?select=*&order=created_at.desc&limit=20');
+      if (data) {
+        redemptionHistory.value = data;
+        if (data.length && lastSeenRedemptionId === null) lastSeenRedemptionId = data[0].id;
+        if (data.length && lastSeenRedemptionId !== data[0].id && mode.value === 'guest') {
+          const latest = data[0];
+          redemptionPopup.value = { show: true, name: latest.reward_name, icon: latest.icon || '🎁', cost: latest.cost };
+          lastSeenRedemptionId = latest.id;
+        } else if (data.length) {
+          lastSeenRedemptionId = data[0].id;
+        }
+      }
+    }
+
+    async function redeemReward(reward) {
+      if (coinBalance.value < reward.cost) { showToast('爱心币不够哦，再加把劲～'); return; }
+      const record = { reward_id: reward.id, reward_name: reward.name, cost: reward.cost, icon: reward.icon };
+      const data = await sbFetchSafe('redemptions', { method: 'POST', prefer: 'return=representation', body: JSON.stringify(record) });
+      if (data && data[0]) {
+        redemptionHistory.value.unshift(data[0]);
+        lastSeenRedemptionId = data[0].id;
+        showToast(`已兑换「${reward.name}」🎉`);
+      } else {
+        showToast('兑换失败，可能需要先创建 redemptions 表');
+      }
+    }
+
+    // ── Ingredients ──
+    async function fetchIngredients() {
+      const data = await sbFetchSafe('ingredients?select=*&order=created_at.asc');
+      if (data) ingredients.value = data;
+    }
+
+    async function addIngredient() {
+      if (!newIngredient.value.trim()) return;
+      const item = { name: newIngredient.value.trim(), in_stock: true };
+      const data = await sbFetchSafe('ingredients', { method: 'POST', prefer: 'return=representation', body: JSON.stringify(item) });
+      if (data && data[0]) {
+        ingredients.value.push(data[0]);
+        newIngredient.value = '';
+      } else {
+        showToast('添加失败，可能需要先创建 ingredients 表');
+      }
+    }
+
+    async function toggleIngredient(ing) {
+      const next = !ing.in_stock;
+      const ok = await sbFetchSafe(`ingredients?id=eq.${ing.id}`, { method: 'PATCH', body: JSON.stringify({ in_stock: next }) });
+      ing.in_stock = next;
+    }
+
+    async function removeIngredient(id) {
+      await sbFetchSafe(`ingredients?id=eq.${id}`, { method: 'DELETE' });
+      ingredients.value = ingredients.value.filter(i => i.id !== id);
+    }
+
+    // ── Settings (anniversary date + secret message) ──
+    async function fetchSettings() {
+      const data = await sbFetchSafe('app_settings?select=*&id=eq.1');
+      if (data && data[0]) {
+        settings.value = {
+          anniversary_date: data[0].anniversary_date || '',
+          secret_message: data[0].secret_message || settings.value.secret_message,
+          secret_trigger_dish_id: data[0].secret_trigger_dish_id || null,
+        };
+        festiveManualOn.value = !!data[0].festive_manual_on;
+      }
+    }
+
+    async function saveSettings() {
+      const payload = {
+        anniversary_date: settings.value.anniversary_date || null,
+        secret_message: settings.value.secret_message,
+        secret_trigger_dish_id: settings.value.secret_trigger_dish_id || null,
+        festive_manual_on: festiveManualOn.value,
+      };
+      const ok = await sbFetchSafe('app_settings?id=eq.1', { method: 'PATCH', body: JSON.stringify(payload) });
+      if (!ok) showToast('保存失败，可能需要先创建 app_settings 表');
+    }
+
+    // ── Easter egg ──
+    function tapHeart() {
+      heartTapCount.value++;
+      clearTimeout(heartTapTimer);
+      heartTapTimer = setTimeout(() => { heartTapCount.value = 0; }, 1200);
+      if (heartTapCount.value >= 5) {
+        heartTapCount.value = 0;
+        secretMsg.value = { show: true, text: settings.value.secret_message || '遇见你之后，每天都想着该做什么好吃的给你。' };
+      }
+    }
+
+    function previewSecret() {
+      secretMsg.value = { show: true, text: settings.value.secret_message || '（还没写情话哦，先在上面输入框写一句吧）' };
+    }
+
+    // ── Blind box ──
+    function openBlindbox() {
+      if (!dishes.value.length) { blindbox.value = { show: true, stage: 'empty', dish: null }; return; }
+      rollBlindbox();
+    }
+
+    function rollBlindbox() {
+      blindbox.value = { show: true, stage: 'shaking', dish: null };
+      setTimeout(() => {
+        const pick = dishes.value[Math.floor(Math.random() * dishes.value.length)];
+        blindbox.value = { show: true, stage: 'revealed', dish: pick };
+      }, 900);
+    }
+
+    function closeBlindbox() {
+      blindbox.value = { show: false, stage: 'shaking', dish: null };
+    }
+
+    function confirmBlindbox() {
+      if (blindbox.value.dish && !isOrdered(blindbox.value.dish.id)) {
+        orderedIds.value.push(blindbox.value.dish.id);
+      }
+      showToast(`「${blindbox.value.dish.name}」已加入点单 🎁`);
+      closeBlindbox();
+    }
+
     // ── Polling ──
     function startPolling() {
       pollTimer = setInterval(async () => {
         await fetchDishes();
-        if (mode.value === 'chef') await fetchLatestOrder();
-      }, 8000); // every 8s
+        await fetchRedemptions();
+        if (mode.value === 'chef') {
+          await fetchLatestOrder();
+          await fetchOrders();
+        } else {
+          await fetchOrders();
+        }
+      }, 8000);
     }
 
     function stopPolling() {
@@ -813,6 +1452,7 @@ createApp({
     function switchToGuest() {
       mode.value = 'guest';
       fetchDishes();
+      fetchOrders();
     }
 
     function viewNewOrder() {
@@ -877,6 +1517,11 @@ createApp({
       loading.value = true;
       await fetchDishes();
       await fetchLatestOrder();
+      await fetchOrders();
+      await fetchRewards();
+      await fetchRedemptions();
+      await fetchIngredients();
+      await fetchSettings();
       loading.value = false;
       startPolling();
     }
@@ -896,6 +1541,16 @@ createApp({
       removeOrder, clearOrder, sendOrder,
       handleNewPhoto, handleDishPhoto,
       switchToGuest, viewNewOrder, formatTime,
+
+      // new feature exports
+      orders, rewards, redemptionHistory, ingredients, settings,
+      showRewardShop, showReviews, showIngredients,
+      newReward, newIngredient, secretMsg, blindbox, reviewModal, redemptionPopup,
+      festiveManualOn, festiveOverride, festiveActive, festiveLabel,
+      reviewedOrders, pendingReviewOrders, coinBalance,
+      tapHeart, previewSecret, openBlindbox, rollBlindbox, closeBlindbox, confirmBlindbox,
+      openReviewModal, submitReview, addReward, removeReward, redeemReward,
+      addIngredient, toggleIngredient, removeIngredient, saveSettings,
     };
   }
 }).mount('#app');
