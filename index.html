@@ -322,6 +322,84 @@
       0% { transform: scale(0.4) rotate(-10deg); opacity: 0; }
       100% { transform: scale(1) rotate(0deg); opacity: 1; }
     }
+
+    /* ── Search & filter chips ── */
+    .chip {
+      flex-shrink: 0;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      background: var(--warm-white);
+      color: var(--ink-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .chip.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+    .chip-row {
+      display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px;
+      scrollbar-width: none;
+    }
+    .chip-row::-webkit-scrollbar { display: none; }
+    .recent-badge {
+      position: absolute; top: 6px; right: 6px;
+      background: rgba(44,26,14,0.55); color: white;
+      border-radius: 999px; font-size: 9px; padding: 2px 7px;
+      font-weight: 600; backdrop-filter: blur(2px);
+    }
+    .rank-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+    .rank-num {
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--cream); color: var(--accent);
+      font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .rank-thumb {
+      width: 30px; height: 30px;
+      border-radius: 7px; object-fit: cover;
+      flex-shrink: 0; border: 1px solid var(--border);
+    }
+    .rank-thumb-placeholder {
+      width: 30px; height: 30px;
+      border-radius: 7px; background: var(--cream);
+      border: 1px dashed var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; flex-shrink: 0;
+    }
+
+    /* ── Star rating ── */
+    .star-row { display: flex; gap: 4px; }
+    .star-btn {
+      background: none; border: none; cursor: pointer;
+      font-size: 22px; line-height: 1; padding: 2px;
+      color: var(--border); transition: transform 0.1s;
+    }
+    .star-btn.filled { color: var(--gold); }
+    .star-btn:active { transform: scale(1.15); }
+    .star-display { color: var(--gold); font-size: 13px; letter-spacing: 1px; }
+
+    /* ── Points ── */
+    .points-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: linear-gradient(135deg, #fff3da, #ffe8b8);
+      border: 1px solid #e8cf8a; color: #8a6512;
+      border-radius: 999px; padding: 4px 11px;
+      font-size: 12px; font-weight: 600;
+    }
+    .reward-card {
+      background: var(--warm-white); border: 1px solid var(--border);
+      border-radius: 12px; padding: 12px; text-align: center;
+      position: relative;
+    }
+    .reward-card.locked { opacity: 0.5; }
+    .reward-card.redeemed { border-color: #22a36b; background: #f0fbf6; }
   </style>
 </head>
 <body>
@@ -387,7 +465,7 @@
         </div>
         <div class="flex items-center gap-3 flex-wrap justify-center">
           <div class="mode-pill">
-            <button :class="{ active: mode === 'chef' }" @click="mode = 'chef'">👨‍🍳 大厨管理</button>
+            <button :class="{ active: mode === 'chef' }" @click="switchToChef">👨‍🍳 大厨管理</button>
             <button :class="{ active: mode === 'guest' }" @click="switchToGuest">💕 宝贝点单</button>
           </div>
           <div class="sync-indicator">
@@ -416,6 +494,22 @@
         <div class="text-2xl mb-1">👨‍🍳</div>
         <p class="serif font-semibold" style="color:var(--ink); font-size:15px;">大厨，今天打算做什么好吃的？</p>
         <p class="text-xs mt-1" style="color:var(--ink-muted);">录入菜品后，宝贝那边会实时看到 ❤️</p>
+        <div class="flex justify-center mt-2.5">
+          <span class="points-badge">⭐ 已积累 {{ chefPoints }} 积分</span>
+        </div>
+      </div>
+
+      <!-- Well-reviewed dishes -->
+      <div v-if="wellReviewedDishes.length" class="mb-5">
+        <div class="ornament-divider mb-3"><span class="serif text-xs tracking-widest" style="color:var(--gold);">💛 好评菜</span></div>
+        <div class="card p-4 flex flex-col gap-1">
+          <div v-for="d in wellReviewedDishes" :key="d.id" class="rank-row">
+            <img v-if="d.photo" :src="d.photo" class="rank-thumb" @click="lightbox = d.photo" style="cursor:zoom-in;" />
+            <div v-else class="rank-thumb-placeholder">{{ getCatIcon(d.category) }}</div>
+            <span class="text-sm flex-1 truncate" style="color:var(--ink);">{{ d.name }}</span>
+            <span class="star-display">{{ '★'.repeat(Math.round(d.avgRating)) }}{{ '☆'.repeat(5 - Math.round(d.avgRating)) }}</span>
+          </div>
+        </div>
       </div>
 
       <!-- Latest order panel -->
@@ -437,6 +531,31 @@
             </div>
           </div>
           <p class="text-xs p-2 rounded-lg" style="background:#fff0e8; color:var(--ink-soft); line-height:1.6;">{{ latestOrder.message }}</p>
+
+          <div class="mt-3 pt-3" style="border-top:1px dashed var(--border);">
+            <p class="text-xs font-medium mb-1.5" style="color:var(--ink-soft);">这顿饭好吃吗？给个评价吧～</p>
+            <div class="star-row mb-2">
+              <button v-for="n in 5" :key="n" class="star-btn" :class="{ filled: n <= (latestOrder.rating || 0) }"
+                @click="rateOrder(latestOrder, n)">★</button>
+            </div>
+            <input v-if="latestOrder.rating" v-model="latestOrder.rating_comment"
+              @blur="saveRatingComment(latestOrder)"
+              placeholder="说一句评价，比如「番茄炒蛋太好吃了」" maxlength="60" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Popularity ranking -->
+      <div v-if="topDishes.length" class="mb-5">
+        <div class="ornament-divider mb-3"><span class="serif text-xs tracking-widest" style="color:var(--gold);">🔥 点单排行</span></div>
+        <div class="card p-4 flex flex-col gap-1">
+          <div v-for="(d, idx) in topDishes" :key="d.id" class="rank-row">
+            <span class="rank-num">{{ idx + 1 }}</span>
+            <img v-if="d.photo" :src="d.photo" class="rank-thumb" @click="lightbox = d.photo" style="cursor:zoom-in;" />
+            <div v-else class="rank-thumb-placeholder">{{ getCatIcon(d.category) }}</div>
+            <span class="text-sm flex-1 truncate" style="color:var(--ink);">{{ d.name }}</span>
+            <span class="text-xs flex-shrink-0" style="color:var(--ink-muted);">被点 {{ d.count }} 次</span>
+          </div>
         </div>
       </div>
 
@@ -493,7 +612,10 @@
                 <div v-else class="dish-thumb-placeholder">{{ getCatIcon(dish.category) }}</div>
               </div>
               <div class="flex-1 min-w-0">
-                <div class="font-medium text-sm" style="color:var(--ink);">{{ dish.name }}</div>
+                <div class="font-medium text-sm" style="color:var(--ink);">
+                  {{ dish.name }}
+                  <span v-if="getDishCount(dish.id) > 0" class="text-xs" style="color:var(--ink-muted); font-weight:400;">· 点过{{ getDishCount(dish.id) }}次</span>
+                </div>
                 <div v-if="dish.note" class="text-xs mt-0.5" style="color:var(--ink-muted);">{{ dish.note }}</div>
                 <label class="btn-ghost mt-1.5 inline-flex items-center gap-1 cursor-pointer" style="position:relative;overflow:hidden;">
                   <input type="file" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer;" @change="e => handleDishPhoto(e, dish)" />
@@ -519,6 +641,28 @@
         <div class="text-2xl mb-1">💕</div>
         <p class="serif font-semibold" style="color:var(--ink); font-size:15px;">今天想吃什么呀？</p>
         <p class="text-xs mt-1" style="color:var(--ink-muted);">挑好了点"发给大厨"，TA 会马上看到 ❤️</p>
+        <div class="flex justify-center mt-2.5">
+          <span class="points-badge">⭐ 你已积累 {{ guestPoints }} 积分</span>
+        </div>
+      </div>
+
+      <!-- Rewards redemption (catalog + redemption history both live in Supabase) -->
+      <div class="mb-5">
+        <div class="ornament-divider mb-3"><span class="serif text-xs tracking-widest" style="color:var(--gold);">🎀 积分兑换</span></div>
+        <div v-if="rewards.length === 0" class="text-center py-6">
+          <p class="text-xs" style="color:var(--ink-muted);">大厨还没设置兑换奖励～</p>
+        </div>
+        <div v-else class="grid grid-cols-2 gap-2.5">
+          <div v-for="r in rewards" :key="r.id" class="reward-card"
+            :class="{ locked: guestPoints < r.cost && !isRedeemed(r.id), redeemed: isRedeemed(r.id) }">
+            <div style="font-size:26px;">{{ r.icon }}</div>
+            <div class="text-xs font-medium mt-1" style="color:var(--ink);">{{ r.name }}</div>
+            <div class="text-xs mt-0.5" style="color:var(--ink-muted);">{{ r.cost }} 积分</div>
+            <button v-if="!isRedeemed(r.id)" class="btn-ghost mt-2 w-full"
+              :disabled="guestPoints < r.cost" @click="redeemReward(r)">兑换</button>
+            <div v-else class="text-xs mt-2 font-medium" style="color:#1a8a58;">✓ 已兑换</div>
+          </div>
+        </div>
       </div>
 
       <!-- Blind box entry -->
@@ -526,6 +670,21 @@
         <div class="blindbox-trigger" @click="openBlindbox">
           <span style="font-size:18px;">🎁</span>
           <span>不知道吃什么？抽个盲盒试试！</span>
+        </div>
+      </div>
+
+      <!-- Order history entry -->
+      <button v-if="orders.length" class="btn-ghost w-full mb-5" style="padding:10px;" @click="showHistory = true">
+        📜 查看点单历史（共 {{ orders.length }} 次）
+      </button>
+
+      <!-- Search & category filter -->
+      <div v-if="dishes.length > 0" class="mb-5">
+        <input v-model="searchQuery" placeholder="🔍 搜索菜名或备注…" class="mb-2" />
+        <div class="chip-row">
+          <button class="chip" :class="{ active: activeCategory === 'all' }" @click="activeCategory = 'all'">全部</button>
+          <button v-for="cat in categoriesWithDishes" :key="cat.id" class="chip"
+            :class="{ active: activeCategory === cat.id }" @click="activeCategory = cat.id">{{ cat.icon }} {{ cat.name }}</button>
         </div>
       </div>
 
@@ -540,8 +699,14 @@
         <p class="text-xs mt-1" style="color:var(--ink-muted);">让 TA 先去"大厨管理"添加菜单吧 👆</p>
       </div>
 
+      <div v-else-if="filteredCategoriesWithDishes.length === 0" class="text-center py-16">
+        <div class="empty-art">🔍</div>
+        <p class="mt-3 text-sm" style="color:var(--ink-muted);">没找到符合条件的菜品</p>
+        <p class="text-xs mt-1" style="color:var(--ink-muted);">换个关键词或分类试试～</p>
+      </div>
+
       <div v-else>
-        <div v-for="cat in categoriesWithDishes" :key="cat.id" class="mb-5">
+        <div v-for="cat in filteredCategoriesWithDishes" :key="cat.id" class="mb-5">
           <div class="cat-header">
             <span class="text-base">{{ cat.icon }}</span>
             <span class="serif text-sm font-semibold" style="color:var(--ink);">{{ cat.name }}</span>
@@ -557,6 +722,9 @@
                 <div v-if="isOrdered(dish.id)"
                   style="position:absolute;top:6px;left:6px;background:#22a36b;color:white;border-radius:999px;font-size:10px;padding:2px 8px;font-weight:600;">
                   ✓ 已点
+                </div>
+                <div v-if="!isOrdered(dish.id) && isRecentlyOrdered(dish.id)" class="recent-badge">
+                  🕐 本周点过
                 </div>
               </div>
               <div class="flex items-center gap-2 px-2.5 py-2">
@@ -649,6 +817,43 @@
 
   </div><!-- end main app -->
 
+  <!-- ORDER HISTORY SHEET -->
+  <transition name="overlay">
+    <div v-if="showHistory" class="bottom-sheet-overlay" @click.self="showHistory = false">
+      <div class="bottom-sheet">
+        <div class="flex justify-center mb-4">
+          <div style="width:36px;height:4px;background:var(--border);border-radius:2px;"></div>
+        </div>
+        <div class="ornament-divider mb-4">
+          <span class="serif text-sm font-semibold tracking-widest" style="color:var(--ink);">点单历史</span>
+        </div>
+        <div v-if="!orders.length" class="text-center py-8">
+          <div class="empty-art">📭</div>
+          <p class="mt-2 text-sm" style="color:var(--ink-muted);">还没有点单记录</p>
+        </div>
+        <template v-else>
+          <button class="btn-ghost w-full mb-3" style="padding:9px;" @click="shareHistory">
+            📤 导出 / 分享全部历史
+          </button>
+          <div class="flex flex-col gap-2">
+            <div v-for="o in orders" :key="o.id" class="order-card">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xs font-semibold" style="color:var(--ink-soft);">{{ formatTime(o.created_at) }}</span>
+                <span v-if="o.rating" class="star-display">{{ '★'.repeat(o.rating) }}{{ '☆'.repeat(5 - o.rating) }}</span>
+              </div>
+              <div class="flex flex-wrap gap-1.5 mb-1.5">
+                <span v-for="item in o.items" :key="item.id" class="text-xs px-2 py-1 rounded-lg"
+                  style="background:var(--cream);color:var(--ink);">{{ item.name }}</span>
+              </div>
+              <p v-if="o.rating_comment" class="text-xs italic" style="color:var(--ink-muted);">"{{ o.rating_comment }}"</p>
+              <button class="btn-ghost mt-2" style="font-size:11px;" @click="shareOrder(o)">分享这次点单</button>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+  </transition>
+
 </div><!-- end #app -->
 
 <script>
@@ -681,12 +886,30 @@ createApp({
     // ── Blind box state ──
     const blindbox = ref({ show: false, stage: 'shaking', dish: null });
 
+    // ── Order history / stats state (no new tables, reuses `orders`) ──
+    const orders = ref([]);
+    const searchQuery = ref('');
+    const activeCategory = ref('all');
+    const showHistory = ref(false);
+
+    // ── Points & rewards (server-backed via `rewards` + `redemptions` tables) ──
+    // Rewards catalog and redemption history now live in Supabase instead of
+    // localStorage, so they're shared across devices like everything else here.
+    // Note: the "enough points?" check below still runs in this browser's JS,
+    // not in a database rule — a guest who really wanted to could still tamper
+    // with the request directly. This re-check just guards against accidental
+    // double-taps / stale UI (e.g. two tabs open), not deliberate cheating.
+    const rewards = ref([]);
+    const redemptions = ref([]);
+
     const categories = [
       { id: 'staple', name: '主食', icon: '🍚' },
       { id: 'hot',    name: '热炒', icon: '🔥' },
       { id: 'cold',   name: '凉菜', icon: '🥗' },
       { id: 'soup',   name: '汤品', icon: '🍲' },
       { id: 'sweet',  name: '甜品', icon: '🍮' },
+      { id: 'drink',  name: '饮品', icon: '🧋' },
+      { id: 'fatLoos',  name: '减脂餐', icon: '🥗' },
       { id: 'other',  name: '其他', icon: '🍴' },
     ];
 
@@ -700,13 +923,129 @@ createApp({
         .filter(cat => cat.dishes.length > 0)
     );
 
+    // Guest-facing list: applies search text + category chip filter on top of the full menu
+    const filteredCategoriesWithDishes = computed(() => {
+      const q = searchQuery.value.trim().toLowerCase();
+      return categories
+        .map(cat => {
+          if (activeCategory.value !== 'all' && cat.id !== activeCategory.value) return { ...cat, dishes: [] };
+          let list = dishes.value.filter(d => d.category === cat.id);
+          if (q) list = list.filter(d => d.name.toLowerCase().includes(q) || (d.note || '').toLowerCase().includes(q));
+          return { ...cat, dishes: list };
+        })
+        .filter(cat => cat.dishes.length > 0);
+    });
+
+    // Dishes ordered within the last 7 days, derived purely from the `orders` table
+    const recentlyOrderedIds = computed(() => {
+      const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      const ids = new Set();
+      orders.value.forEach(o => {
+        if (new Date(o.created_at).getTime() >= cutoff) {
+          (o.dish_ids || []).forEach(id => ids.add(id));
+        }
+      });
+      return ids;
+    });
+    function isRecentlyOrdered(id) { return recentlyOrderedIds.value.has(id); }
+
+    // How many times each dish has ever been ordered, derived from `orders.dish_ids`
+    const dishOrderCounts = computed(() => {
+      const counts = {};
+      orders.value.forEach(o => {
+        (o.dish_ids || []).forEach(id => { counts[id] = (counts[id] || 0) + 1; });
+      });
+      return counts;
+    });
+    function getDishCount(id) { return dishOrderCounts.value[id] || 0; }
+
+    const topDishes = computed(() =>
+      dishes.value
+        .map(d => ({ ...d, count: getDishCount(d.id) }))
+        .filter(d => d.count > 0)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 3)
+    );
+
+    // ── Ratings ──
+    const ratedOrders = computed(() => orders.value.filter(o => o.rating));
+
+    // Average rating per dish, derived from orders.rating + orders.dish_ids.
+    // A dish only counts toward "好评菜" once it has at least 2 ratings, to avoid
+    // one lucky 5-star skewing the list.
+    const wellReviewedDishes = computed(() => {
+      const sums = {};
+      ratedOrders.value.forEach(o => {
+        (o.dish_ids || []).forEach(id => {
+          if (!sums[id]) sums[id] = { total: 0, n: 0 };
+          sums[id].total += o.rating;
+          sums[id].n += 1;
+        });
+      });
+      return dishes.value
+        .filter(d => sums[d.id] && sums[d.id].n >= 2)
+        .map(d => ({ ...d, avgRating: sums[d.id].total / sums[d.id].n, n: sums[d.id].n }))
+        .filter(d => d.avgRating >= 4)
+        .sort((a, b) => b.avgRating - a.avgRating)
+        .slice(0, 5);
+    });
+
+    // ── Points (derived from orders/ratings, minus what's been redeemed) ──
+    // Formula: 5 points per order sent + 10 bonus points per 5-star rating given,
+    // minus the cost of every row in `redemptions`. Inputs all come from Supabase.
+    const totalPoints = computed(() => {
+      const orderPts = orders.value.length * 5;
+      const ratingBonus = orders.value.filter(o => o.rating === 5).length * 10;
+      const redeemedCost = redemptions.value.reduce((sum, r) => sum + (r.cost || 0), 0);
+      return Math.max(0, orderPts + ratingBonus - redeemedCost);
+    });
+    const guestPoints = totalPoints; // same pool — it's one household, one points balance
+    const chefPoints = totalPoints;
+
+    function isRedeemed(rewardId) {
+      return redemptions.value.some(r => r.reward_id === rewardId);
+    }
+
+    async function redeemReward(reward) {
+      if (isRedeemed(reward.id)) return;
+      // Re-fetch the latest redemption history right before writing, then recompute
+      // points fresh — guards against acting on a stale local balance (e.g. a second
+      // tab redeemed something a moment ago). Still client-side, not tamper-proof.
+      await fetchRedemptions();
+      const freshCost = redemptions.value.reduce((sum, r) => sum + (r.cost || 0), 0);
+      const freshPoints = Math.max(0, orders.value.length * 5 +
+        orders.value.filter(o => o.rating === 5).length * 10 - freshCost);
+      if (freshPoints < reward.cost) {
+        showToast('积分不太够，再加把劲～');
+        return;
+      }
+      if (isRedeemed(reward.id)) { showToast('这个奖励已经被兑换过了'); return; }
+
+      try {
+        const data = await sbFetch('redemptions', {
+          method: 'POST',
+          prefer: 'return=representation',
+          body: JSON.stringify({
+            reward_id: reward.id,
+            reward_name: reward.name,
+            cost: reward.cost,
+            icon: reward.icon,
+          }),
+        });
+        if (data && data[0]) redemptions.value.push(data[0]);
+        showToast(`🎀 已兑换「${reward.name}」，去找大厨领取吧～`);
+      } catch(e) {
+        showToast('兑换失败，请重试');
+      }
+    }
+
     const orderedDishes = computed(() =>
       orderedIds.value.map(id => dishes.value.find(d => d.id === id)).filter(Boolean)
     );
 
     const previewText = computed(() => {
       const names = orderedDishes.value.map(d => d.note ? `${d.name}（${d.note}）` : d.name);
-      return `老公老公！今晚我想吃：【${names.join('、')}】！请大厨接单 ❤️`;
+      return `宝贝宝贝！今晚我想吃：【${names.join('、')}】！请大厨接单 ❤️`;
     });
 
     // ── Supabase helpers ──
@@ -765,6 +1104,28 @@ createApp({
       } catch(e) {}
     }
 
+    // Pulls the broader order history (used for history view, "本周已点过", and popularity stats)
+    async function fetchOrders() {
+      try {
+        const data = await sbFetch('orders?select=*&order=created_at.desc&limit=100');
+        if (data) orders.value = data.map(hydrateOrder);
+      } catch(e) {}
+    }
+
+    async function fetchRewards() {
+      try {
+        const data = await sbFetch('rewards?select=*&order=cost.asc');
+        if (data) rewards.value = data;
+      } catch(e) { showToast('奖励列表加载失败'); }
+    }
+
+    async function fetchRedemptions() {
+      try {
+        const data = await sbFetch('redemptions?select=*&order=created_at.desc&limit=200');
+        if (data) redemptions.value = data;
+      } catch(e) { /* points still computable from orders alone; redemptions just won't deduct */ }
+    }
+
     async function addDish() {
       if (!newDish.value.name.trim()) { showToast('请输入菜名 🙏'); return; }
       const dish = {
@@ -812,6 +1173,32 @@ createApp({
       } catch(e) { showToast('照片更新失败'); }
     }
 
+    // ── Ratings ──
+    // Requires `orders` table to have: rating (int2, nullable), rating_comment (text, nullable)
+    async function rateOrder(order, stars) {
+      order.rating = stars;
+      try {
+        await sbFetch(`orders?id=eq.${order.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ rating: stars }),
+        });
+        const local = orders.value.find(o => o.id === order.id);
+        if (local) local.rating = stars;
+        showToast('评价已保存 ⭐');
+      } catch(e) { showToast('评价保存失败'); }
+    }
+
+    async function saveRatingComment(order) {
+      try {
+        await sbFetch(`orders?id=eq.${order.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ rating_comment: order.rating_comment || '' }),
+        });
+        const local = orders.value.find(o => o.id === order.id);
+        if (local) local.rating_comment = order.rating_comment;
+      } catch(e) { showToast('评语保存失败'); }
+    }
+
     async function sendOrder() {
       if (!orderedDishes.value.length) return;
       sendState.value = 'sending';
@@ -822,11 +1209,12 @@ createApp({
       };
 
       try {
-        await sbFetch('orders', {
+        const data = await sbFetch('orders', {
           method: 'POST',
           prefer: 'return=representation',
           body: JSON.stringify(orderData),
         });
+        if (data && data[0]) orders.value.unshift(hydrateOrder(data[0]));
         await copyToClipboard(previewText.value);
         sendState.value = 'sent';
         showToast('已发给大厨，TA 马上就能看到 💕');
@@ -851,6 +1239,40 @@ createApp({
         document.execCommand('copy');
         document.body.removeChild(ta);
       }
+    }
+
+    // ── Export / share ──
+    function orderToText(o) {
+      const names = (o.items || []).map(it => it.name).join('、') || '（菜品已被删除）';
+      let line = `${formatTime(o.created_at)} 点了：${names}`;
+      if (o.rating) line += ` ｜评价：${'★'.repeat(o.rating)}${'☆'.repeat(5 - o.rating)}`;
+      if (o.rating_comment) line += ` "${o.rating_comment}"`;
+      return line;
+    }
+
+    async function shareOrder(o) {
+      const text = `【私房小厨点单】\n${orderToText(o)}`;
+      await shareOrCopy(text, '点单记录');
+    }
+
+    async function shareHistory() {
+      if (!orders.value.length) return;
+      const lines = orders.value.map(orderToText);
+      const text = `【私房小厨 · 点单历史】共 ${orders.value.length} 次\n\n${lines.join('\n')}`;
+      await shareOrCopy(text, '点单历史');
+    }
+
+    async function shareOrCopy(text, title) {
+      if (navigator.share) {
+        try {
+          await navigator.share({ title, text });
+          return;
+        } catch(e) {
+          // user cancelled share sheet or it's unsupported — fall back to copy
+        }
+      }
+      await copyToClipboard(text);
+      showToast('已复制到剪贴板，可以粘贴分享啦 📋');
     }
 
     // ── Blind box ──
@@ -883,6 +1305,8 @@ createApp({
     function startPolling() {
       pollTimer = setInterval(async () => {
         await fetchDishes();
+        await fetchOrders();
+        await fetchRedemptions();
         if (mode.value === 'chef') {
           await fetchLatestOrder();
         }
@@ -893,9 +1317,14 @@ createApp({
       if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
     }
 
+    function switchToChef() {
+      mode.value = 'chef';
+    }
+
     function switchToGuest() {
       mode.value = 'guest';
       fetchDishes();
+      fetchOrders();
     }
 
     function viewNewOrder() {
@@ -960,6 +1389,9 @@ createApp({
       loading.value = true;
       await fetchDishes();
       await fetchLatestOrder();
+      await fetchOrders();
+      await fetchRewards();
+      await fetchRedemptions();
       loading.value = false;
       startPolling();
     }
@@ -968,7 +1400,7 @@ createApp({
       init();
     });
 
-    onUnmounted(() => stopPolling());
+    onUnmounted(() => { stopPolling(); });
 
     return {
       mode, dishes, orderedIds, showSheet, sendState, toast, lightbox,
@@ -978,10 +1410,23 @@ createApp({
       addDish, removeDish, isOrdered, toggleOrder,
       removeOrder, clearOrder, sendOrder,
       handleNewPhoto, handleDishPhoto,
-      switchToGuest, viewNewOrder, formatTime,
+      switchToGuest, switchToChef, viewNewOrder, formatTime,
 
       // blind box exports
       blindbox, openBlindbox, rollBlindbox, closeBlindbox, confirmBlindbox,
+
+      // search/filter, recent-order badge, popularity, history exports
+      orders, searchQuery, activeCategory, showHistory,
+      filteredCategoriesWithDishes, isRecentlyOrdered, getDishCount, topDishes,
+
+      // rating exports
+      rateOrder, saveRatingComment, wellReviewedDishes,
+
+      // points & rewards exports
+      guestPoints, chefPoints, rewards, isRedeemed, redeemReward,
+
+      // export/share exports
+      shareOrder, shareHistory,
     };
   }
 }).mount('#app');
