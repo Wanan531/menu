@@ -28,12 +28,6 @@
       min-height: 100vh;
     }
     .serif { font-family: 'Noto Serif SC', 'STSong', 'SimSun', serif; }
-    .paper {
-      background-color: var(--warm-white);
-      background-image:
-        radial-gradient(circle at 20% 80%, rgba(184,134,11,0.04) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(200,90,42,0.04) 0%, transparent 50%);
-    }
     .card {
       background: var(--warm-white);
       border: 1px solid var(--border);
@@ -174,7 +168,7 @@
     .bottom-sheet {
       background: var(--warm-white);
       border-radius: 20px 20px 0 0;
-      width: 100%; max-height: 82vh;
+      width: 100%; max-height: 86vh;
       overflow-y: auto; padding: 20px 20px 44px;
       animation: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1);
     }
@@ -182,7 +176,7 @@
     .lightbox-overlay {
       position: fixed; inset: 0;
       background: rgba(0,0,0,0.88);
-      z-index: 80; display: flex;
+      z-index: 90; display: flex;
       align-items: center; justify-content: center; padding: 20px;
     }
     .lightbox-overlay img { max-width: 100%; max-height: 90vh; border-radius: 10px; object-fit: contain; }
@@ -205,6 +199,7 @@
       font-family: 'Noto Sans SC', sans-serif;
     }
     .btn-send:active { transform: scale(0.98); }
+    .btn-send:disabled { opacity: 0.6; cursor: default; }
     .btn-send.sent { background: linear-gradient(135deg, #22a36b 0%, #1a8a58 100%); box-shadow: 0 4px 16px rgba(34,163,107,0.35); }
     .btn-primary {
       background: var(--ink); color: white; border: none;
@@ -213,6 +208,7 @@
       font-family: 'Noto Sans SC', sans-serif; transition: opacity 0.15s;
     }
     .btn-primary:active { opacity: 0.85; }
+    .btn-primary:disabled { opacity: 0.6; cursor: default; }
     .btn-ghost {
       background: transparent; border: 1px solid var(--border);
       border-radius: 8px; padding: 5px 11px;
@@ -245,6 +241,7 @@
       white-space: nowrap;
       box-shadow: 0 4px 16px rgba(0,0,0,0.2);
       animation: toastIn 0.25s ease;
+      max-width: 90vw; text-align: center;
     }
     @keyframes toastIn {
       from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
@@ -262,24 +259,6 @@
     @media (min-width: 420px) { .dish-grid { grid-template-columns: 1fr 1fr 1fr; } }
     .photo-ordered-ring { outline: 3px solid #22a36b; outline-offset: 2px; }
 
-    /* Setup screen */
-    .setup-screen {
-      min-height: 100vh;
-      display: flex; align-items: center; justify-content: center;
-      padding: 24px;
-    }
-    .setup-card {
-      background: var(--warm-white);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 32px 24px;
-      width: 100%; max-width: 420px;
-      box-shadow: 0 8px 32px rgba(44,26,14,0.1);
-    }
-    .input-group { display: flex; flex-direction: column; gap: 6px; }
-    .input-group label { font-size: 13px; font-weight: 500; color: var(--ink-soft); }
-
-    /* Order notification dot */
     .notif-dot {
       width: 8px; height: 8px;
       background: var(--accent);
@@ -292,7 +271,6 @@
       50% { opacity: 0.6; transform: scale(0.8); }
     }
 
-    /* Order history card */
     .order-card {
       background: var(--warm-white);
       border: 1px solid var(--border);
@@ -312,6 +290,38 @@
     }
     .sync-dot.syncing { background: var(--gold); animation: pulse 1s infinite; }
     .sync-dot.error { background: var(--accent); }
+
+    /* ── Blind box ── */
+    .blindbox-trigger {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 14px;
+      border-radius: 14px; border: 1.5px dashed var(--accent-soft);
+      background: repeating-linear-gradient(135deg, #fff8f0, #fff8f0 10px, #fef0e2 10px, #fef0e2 20px);
+      color: var(--accent); font-weight: 600; font-size: 14px;
+      cursor: pointer; transition: transform 0.15s;
+    }
+    .blindbox-trigger:active { transform: scale(0.98); }
+    .blindbox-overlay {
+      position: fixed; inset: 0; background: rgba(44,26,14,0.6);
+      z-index: 70; display: flex; align-items: center; justify-content: center;
+      padding: 24px; backdrop-filter: blur(3px);
+    }
+    .blindbox-card {
+      background: var(--warm-white); border-radius: 22px;
+      padding: 28px 24px; max-width: 320px; width: 100%;
+      text-align: center; box-shadow: 0 16px 48px rgba(44,26,14,0.3);
+    }
+    .blindbox-shake { animation: boxShake 0.5s ease-in-out infinite; }
+    @keyframes boxShake {
+      0%, 100% { transform: rotate(0deg) scale(1); }
+      25% { transform: rotate(-8deg) scale(1.03); }
+      75% { transform: rotate(8deg) scale(1.03); }
+    }
+    .blindbox-reveal { animation: revealPop 0.45s cubic-bezier(0.34,1.56,0.64,1); }
+    @keyframes revealPop {
+      0% { transform: scale(0.4) rotate(-10deg); opacity: 0; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
   </style>
 </head>
 <body>
@@ -331,25 +341,55 @@
     </div>
   </transition>
 
+  <!-- Blind box overlay -->
+  <transition name="fade">
+    <div v-if="blindbox.show" class="blindbox-overlay" @click.self="closeBlindbox">
+      <div class="blindbox-card">
+        <template v-if="blindbox.stage === 'shaking'">
+          <div class="blindbox-shake" style="font-size:64px;">🎁</div>
+          <p class="serif text-sm mt-4" style="color:var(--ink-soft);">命运的盲盒正在摇晃…</p>
+        </template>
+        <template v-else-if="blindbox.dish">
+          <div class="blindbox-reveal">
+            <p class="serif text-xs tracking-widest mb-3" style="color:var(--gold);">✨ 今天就吃这个 ✨</p>
+            <img v-if="blindbox.dish.photo" :src="blindbox.dish.photo"
+              style="width:100%;height:160px;object-fit:cover;border-radius:14px;margin-bottom:12px;border:1px solid var(--border);" />
+            <div v-else style="font-size:56px;margin-bottom:8px;">{{ getCatIcon(blindbox.dish.category) }}</div>
+            <p class="serif text-xl font-semibold" style="color:var(--ink);">{{ blindbox.dish.name }}</p>
+            <p v-if="blindbox.dish.note" class="text-xs mt-1" style="color:var(--ink-muted);">{{ blindbox.dish.note }}</p>
+          </div>
+          <div class="flex gap-2 mt-5">
+            <button class="btn-ghost flex-1" style="padding:10px;" @click="closeBlindbox">关闭</button>
+            <button class="btn-primary flex-1" @click="confirmBlindbox">＋ 加入点单</button>
+          </div>
+          <button class="btn-ghost mt-2" style="font-size:11px;" @click="rollBlindbox">🔄 不要这个，再抽一次</button>
+        </template>
+        <template v-else>
+          <div style="font-size:48px;">🥺</div>
+          <p class="serif text-sm mt-3" style="color:var(--ink-muted);">菜单还是空的，大厨先去加几道菜吧</p>
+          <button class="btn-primary mt-4" @click="closeBlindbox">好嘞</button>
+        </template>
+      </div>
+    </div>
+  </transition>
+
   <!-- ══════════════════════════════════════
        MAIN APP
   ══════════════════════════════════════ -->
   <div>
 
     <!-- HEADER -->
-    <header class="paper sticky top-0 z-40 border-b" style="border-color:var(--border); box-shadow:0 1px 8px rgba(44,26,14,0.06);">
+    <header class="sticky top-0 z-40 border-b" style="background:var(--warm-white); border-color:var(--border); box-shadow:0 1px 8px rgba(44,26,14,0.06);">
       <div class="max-w-lg mx-auto px-4 py-3 flex flex-col items-center gap-2">
         <div class="flex items-center gap-2">
           <span style="font-size:20px">🍜</span>
           <h1 class="serif text-lg font-semibold tracking-widest" style="color:var(--ink); letter-spacing:0.12em;">私房小厨</h1>
-          <span style="font-size:20px">🍜</span>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 flex-wrap justify-center">
           <div class="mode-pill">
             <button :class="{ active: mode === 'chef' }" @click="mode = 'chef'">👨‍🍳 大厨管理</button>
             <button :class="{ active: mode === 'guest' }" @click="switchToGuest">💕 宝贝点单</button>
           </div>
-          <!-- Sync status -->
           <div class="sync-indicator">
             <span class="sync-dot" :class="{ syncing: syncing, error: syncError }"></span>
             <span>{{ syncing ? '同步中' : syncError ? '断线' : '已同步' }}</span>
@@ -432,7 +472,7 @@
             </div>
           </div>
           <button class="btn-primary w-full" @click="addDish" :disabled="saving"
-            style="margin-top:2px; opacity: saving ? 0.7 : 1;">
+            style="margin-top:2px;">
             {{ saving ? '上传中…' : '＋ 加入菜单' }}
           </button>
         </div>
@@ -479,6 +519,14 @@
         <div class="text-2xl mb-1">💕</div>
         <p class="serif font-semibold" style="color:var(--ink); font-size:15px;">今天想吃什么呀？</p>
         <p class="text-xs mt-1" style="color:var(--ink-muted);">挑好了点"发给大厨"，TA 会马上看到 ❤️</p>
+      </div>
+
+      <!-- Blind box entry -->
+      <div class="mb-5">
+        <div class="blindbox-trigger" @click="openBlindbox">
+          <span style="font-size:18px;">🎁</span>
+          <span>不知道吃什么？抽个盲盒试试！</span>
+        </div>
       </div>
 
       <div v-if="loading" class="text-center py-16">
@@ -612,12 +660,12 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 createApp({
   setup() {
-    // ── State ──
+    // ── Core state ──
     const mode = ref('chef');
     const dishes = ref([]);
     const orderedIds = ref([]);
     const showSheet = ref(false);
-    const sendState = ref('idle'); // idle | sending | sent
+    const sendState = ref('idle');
     const toast = ref({ show: false, msg: '' });
     const lightbox = ref(null);
     const loading = ref(false);
@@ -629,6 +677,9 @@ createApp({
     const newDish = ref({ name: '', category: 'hot', note: '', photo: '' });
     let pollTimer = null;
     let lastOrderId = null;
+
+    // ── Blind box state ──
+    const blindbox = ref({ show: false, stage: 'shaking', dish: null });
 
     const categories = [
       { id: 'staple', name: '主食', icon: '🍚' },
@@ -678,7 +729,7 @@ createApp({
       return text ? JSON.parse(text) : null;
     }
 
-    // ── Supabase data ops ──
+    // ── Core data ops ──
     async function fetchDishes() {
       try {
         syncing.value = true;
@@ -693,14 +744,17 @@ createApp({
       }
     }
 
+    function hydrateOrder(order) {
+      const ids = order.dish_ids || [];
+      order.items = ids.map(id => dishes.value.find(d => d.id === id)).filter(Boolean);
+      return order;
+    }
+
     async function fetchLatestOrder() {
       try {
         const data = await sbFetch('orders?select=*&order=created_at.desc&limit=1');
         if (data && data.length > 0) {
-          const order = data[0];
-          // Hydrate dish details into order items
-          const ids = order.dish_ids || [];
-          order.items = ids.map(id => dishes.value.find(d => d.id === id)).filter(Boolean);
+          const order = hydrateOrder(data[0]);
           if (lastOrderId && order.id !== lastOrderId) {
             newOrderAlert.value = true;
             showToast('🛎️ 宝贝下单了！');
@@ -770,13 +824,14 @@ createApp({
       try {
         await sbFetch('orders', {
           method: 'POST',
-          prefer: 'return=minimal',
+          prefer: 'return=representation',
           body: JSON.stringify(orderData),
         });
         await copyToClipboard(previewText.value);
         sendState.value = 'sent';
         showToast('已发给大厨，TA 马上就能看到 💕');
         showSheet.value = false;
+
         setTimeout(() => { sendState.value = 'idle'; clearOrder(); }, 3500);
       } catch(e) {
         sendState.value = 'idle';
@@ -798,12 +853,40 @@ createApp({
       }
     }
 
+    // ── Blind box ──
+    function openBlindbox() {
+      if (!dishes.value.length) { blindbox.value = { show: true, stage: 'empty', dish: null }; return; }
+      rollBlindbox();
+    }
+
+    function rollBlindbox() {
+      blindbox.value = { show: true, stage: 'shaking', dish: null };
+      setTimeout(() => {
+        const pick = dishes.value[Math.floor(Math.random() * dishes.value.length)];
+        blindbox.value = { show: true, stage: 'revealed', dish: pick };
+      }, 900);
+    }
+
+    function closeBlindbox() {
+      blindbox.value = { show: false, stage: 'shaking', dish: null };
+    }
+
+    function confirmBlindbox() {
+      if (blindbox.value.dish && !isOrdered(blindbox.value.dish.id)) {
+        orderedIds.value.push(blindbox.value.dish.id);
+      }
+      showToast(`「${blindbox.value.dish.name}」已加入点单 🎁`);
+      closeBlindbox();
+    }
+
     // ── Polling ──
     function startPolling() {
       pollTimer = setInterval(async () => {
         await fetchDishes();
-        if (mode.value === 'chef') await fetchLatestOrder();
-      }, 8000); // every 8s
+        if (mode.value === 'chef') {
+          await fetchLatestOrder();
+        }
+      }, 8000);
     }
 
     function stopPolling() {
@@ -896,6 +979,9 @@ createApp({
       removeOrder, clearOrder, sendOrder,
       handleNewPhoto, handleDishPhoto,
       switchToGuest, viewNewOrder, formatTime,
+
+      // blind box exports
+      blindbox, openBlindbox, rollBlindbox, closeBlindbox, confirmBlindbox,
     };
   }
 }).mount('#app');
